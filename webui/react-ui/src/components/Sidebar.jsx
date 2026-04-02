@@ -32,7 +32,7 @@ const Sidebar = ({ children }) => {
         <div className="sidebar-header">
           <Link to="/" className="sidebar-logo" onClick={closeMobile}>
             <div className="logo-icon">
-              <img src="/app/logo_1.png" alt="LocalAGI" />
+              <img src="/app/logo.png" alt="LocalAGI" />
             </div>
             {!collapsed && <span className="logo-text">LocalAGI</span>}
           </Link>
@@ -74,6 +74,17 @@ const Sidebar = ({ children }) => {
               </span>
             )}
           </div>
+          <button
+            className="logout-button"
+            onClick={() => {
+              document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Strict';
+              window.location.href = '/login';
+            }}
+            title="Logout"
+          >
+            <i className="fas fa-sign-out-alt" />
+            {!collapsed && <span>Logout</span>}
+          </button>
         </div>
       </aside>
 

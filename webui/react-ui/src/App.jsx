@@ -54,7 +54,7 @@ function App() {
         <div className="sidebar-header">
           <Link to="/" className="sidebar-logo">
             <img 
-              src="/app/logo_1.png" 
+              src="/app/logo.png" 
               alt="LocalAGI" 
               className="sidebar-logo-img"
             />
@@ -89,6 +89,28 @@ function App() {
               System <strong>Active</strong>
             </span>
           </div>
+          <button
+            className="logout-button"
+            id="logout-btn"
+            onClick={async () => {
+              try {
+                const response = await fetch('/logout', { method: 'POST', credentials: 'include' });
+                if (response.ok) {
+                  window.location.href = '/login';
+                } else {
+                  document.cookie = 'token=; max-age=0; path=/';
+                  window.location.href = '/login';
+                }
+              } catch (e) {
+                document.cookie = 'token=; max-age=0; path=/';
+                window.location.href = '/login';
+              }
+            }}
+            title="Logout"
+          >
+            <i className="fas fa-sign-out-alt" />
+            <span>Logout</span>
+          </button>
           <ThemeToggle />
         </div>
       </aside>

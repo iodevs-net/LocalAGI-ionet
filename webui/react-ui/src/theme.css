@@ -5,50 +5,50 @@
    BASE VARIABLES (Shared)
    =================================== */
 :root {
-  /* Brand Colors - Primary Palette (Consistent across themes) */
-  --color-primary: #38BDF8;
-  --color-primary-hover: #0EA5E9;
-  --color-primary-active: #0284C7;
+  /* Brand Colors - Primary Palette (Graphite with Mint Green) */
+  --color-primary: #374151;
+  --color-primary-hover: #1F2937;
+  --color-primary-active: #111827;
   --color-primary-text: #FFFFFF;
-  --color-primary-light: rgba(56, 189, 248, 0.08);
-  --color-primary-border: rgba(56, 189, 248, 0.15);
+  --color-primary-light: rgba(55, 65, 81, 0.1);
+  --color-primary-border: rgba(55, 65, 81, 0.2);
   
-  /* Secondary Colors */
-  --color-secondary: #14B8A6;
-  --color-secondary-hover: #0D9488;
-  --color-secondary-light: rgba(20, 184, 166, 0.1);
-  
-  /* Accent Colors */
-  --color-accent: #8B5CF6;
-  --color-accent-hover: #7C3AED;
-  --color-accent-light: rgba(139, 92, 246, 0.1);
-  --color-accent-purple: #A78BFA;
-  --color-accent-teal: #2DD4BF;
+  /* Secondary Colors - Mint Green */
+  --color-secondary: #10B981;
+  --color-secondary-hover: #059669;
+  --color-secondary-light: rgba(16, 185, 129, 0.1);
+
+  /* Accent Colors - Mint Green highlights */
+  --color-accent: #10B981;
+  --color-accent-hover: #059669;
+  --color-accent-light: rgba(16, 185, 129, 0.1);
+  --color-accent-purple: #10B981;
+  --color-accent-teal: #34D399;
   
   /* Status Colors (Consistent across themes) */
-  --color-success: #14B8A6;
-  --color-success-light: rgba(20, 184, 166, 0.1);
-  --color-success-dark: #0D9488;
+  --color-success: #10B981;
+  --color-success-light: rgba(16, 185, 129, 0.1);
+  --color-success-dark: #059669;
   --color-warning: #F59E0B;
   --color-warning-light: rgba(245, 158, 11, 0.1);
   --color-warning-dark: #D97706;
   --color-error: #EF4444;
   --color-error-light: rgba(239, 68, 68, 0.1);
   --color-error-dark: #DC2626;
-  --color-info: #38BDF8;
-  --color-info-light: rgba(56, 189, 248, 0.1);
+  --color-info: #374151;
+  --color-info-light: rgba(55, 65, 81, 0.1);
   
-  /* Gradient Definitions */
-  --gradient-primary: linear-gradient(135deg, #38BDF8 0%, #8B5CF6 50%, #14B8A6 100%);
-  --gradient-subtle: linear-gradient(135deg, rgba(56, 189, 248, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
-  --gradient-text: linear-gradient(135deg, #38BDF8 0%, #8B5CF6 50%, #14B8A6 100%);
+  /* Gradient Definitions - Mint Green on Graphite */
+  --gradient-primary: linear-gradient(135deg, #374151 0%, #1F2937 50%, #10B981 100%);
+  --gradient-subtle: linear-gradient(135deg, rgba(55, 65, 81, 0.05) 0%, rgba(16, 185, 129, 0.05) 100%);
+  --gradient-text: linear-gradient(135deg, #374151 0%, #10B981 50%, #059669 100%);
   
   /* Shadows */
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12);
   --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
   --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
   --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.15);
-  --shadow-glow: 0 0 0 1px rgba(56, 189, 248, 0.1), 0 0 8px rgba(56, 189, 248, 0.15);
+  --shadow-glow: 0 0 0 1px rgba(16, 185, 129, 0.2), 0 0 8px rgba(16, 185, 129, 0.15);
   
   /* Animation Timing */
   --duration-fast: 150ms;
@@ -101,18 +101,18 @@
   
   /* Text Colors */
   --color-text-primary: #F1F5F9;
-  --color-text-secondary: #94A3B8;
-  --color-text-muted: #64748B;
-  --color-text-disabled: #475569;
+  --color-text-secondary: #9CA3AF;
+  --color-text-muted: #6B7280;
+  --color-text-disabled: #4B5563;
   --color-text-inverse: #0F172A;
-  --color-text-placeholder: #64748B;
+  --color-text-placeholder: #6B7280;
   
   /* Border Colors */
   --color-border: rgba(148, 163, 184, 0.15);
   --color-border-subtle: rgba(148, 163, 184, 0.08);
   --color-border-strong: rgba(148, 163, 184, 0.25);
-  --color-border-focus: rgba(56, 189, 248, 0.4);
-  
+  --color-border-focus: rgba(16, 185, 129, 0.4);
+
   /* Legacy mappings */
   --dark-bg: var(--color-bg-primary);
   --darker-bg: var(--color-bg-primary);
@@ -135,18 +135,18 @@
   --color-bg-input: #FFFFFF;
   
   /* Text Colors */
-  --color-text-primary: #1E293B;
-  --color-text-secondary: #64748B;
-  --color-text-muted: #94A3B8;
-  --color-text-disabled: #CBD5E1;
+  --color-text-primary: #1F2937;
+  --color-text-secondary: #4B5563;
+  --color-text-muted: #6B7280;
+  --color-text-disabled: #9CA3AF;
   --color-text-inverse: #FFFFFF;
-  --color-text-placeholder: #94A3B8;
+  --color-text-placeholder: #6B7280;
   
   /* Border Colors */
   --color-border: rgba(148, 163, 184, 0.25);
   --color-border-subtle: rgba(148, 163, 184, 0.15);
   --color-border-strong: rgba(148, 163, 184, 0.35);
-  --color-border-focus: rgba(56, 189, 248, 0.5);
+  --color-border-focus: rgba(16, 185, 129, 0.5);
   
   /* Adjusted shadows for light theme */
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);

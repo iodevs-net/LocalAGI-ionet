@@ -78,6 +78,17 @@ func (app *App) registerRoutes(pool *state.AgentPool, webapp *fiber.App) {
 		return c.Status(401).Redirect("/app") // After login, just redirect to index
 	})
 
+	webapp.Post("/logout", func(c *fiber.Ctx) error {
+		c.Cookie(&fiber.Cookie{
+			Name:     "token",
+			Value:    "",
+			MaxAge:   0,
+			Path:     "/",
+			HTTPOnly: true,
+		})
+		return c.Redirect("/login")
+	})
+
 	conversationTracker := conversations.NewConversationTracker[string](app.config.ConversationStoreDuration)
 
 	webapp.Post("/v1/responses", app.Responses(pool, conversationTracker))
