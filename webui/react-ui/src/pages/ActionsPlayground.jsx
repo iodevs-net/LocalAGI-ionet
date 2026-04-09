@@ -25,9 +25,9 @@ function ActionsPlayground() {
 
   // Update document title
   useEffect(() => {
-    document.title = 'Actions Playground - LocalAGI';
+    document.title = 'Actions Playground - IONET';
     return () => {
-      document.title = 'LocalAGI'; // Reset title when component unmounts
+      document.title = 'IONET'; // Reset title when component unmounts
     };
   }, []);
 

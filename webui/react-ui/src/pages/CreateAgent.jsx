@@ -11,9 +11,9 @@ function CreateAgent() {
   const [formData, setFormData] = useState({});
 
   useEffect(() => {
-    document.title = 'Create Agent - LocalAGI';
+    document.title = 'Create Agent - IONET';
     return () => {
-      document.title = 'LocalAGI'; // Reset title when component unmounts
+      document.title = 'IONET'; // Reset title when component unmounts
     };
   }, []);
 

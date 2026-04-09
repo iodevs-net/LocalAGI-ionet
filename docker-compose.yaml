@@ -1,4 +1,4 @@
-# LocalAGI with MiniMax API
+# IONET with MiniMax API
 # Uncomment localai section to use local LocalAI instead
 
 services:
@@ -46,7 +46,7 @@ services:
       timeout: 5s
       retries: 3
 
-  localagi:
+  ionet:
     depends_on:
       postgres:
         condition: service_healthy
@@ -64,6 +64,7 @@ services:
       - LOCALAGI_MULTIMODAL_MODEL=${MULTIMODAL_MODEL:-moondream2-20250414}
       - LOCALAGI_LLM_API_URL=${OPENAI_BASE_URL}
       - LOCALAGI_LLM_API_KEY=${OPENAI_API_KEY}
+      - LOCALAGI_API_KEYS=${LOCALAGI_API_KEYS:-}
       - LOCALAGI_STATE_DIR=/pool
       - LOCALAGI_TIMEOUT=5m
       - LOCALAGI_ENABLE_CONVERSATIONS_LOGGING=false
@@ -72,11 +73,11 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
-      - localagi_pool:/pool
+      - ionet_pool:/pool
 
 volumes:
   postgres_data:
   models:
   backends:
   images:
-  localagi_pool:
+  ionet_pool:

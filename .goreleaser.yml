@@ -2,8 +2,8 @@
 version: 2
 builds:
   - main: ./
-    id: "localagi"
-    binary: localagi
+    id: "ionet"
+    binary: ionet
     ldflags:
       - -w -s
       # - -X github.com/internal.Version={{.Tag}}

@@ -96,9 +96,9 @@ function AgentsList() {
   };
 
   useEffect(() => {
-    document.title = 'Agents - LocalAGI';
+    document.title = 'Agents - IONET';
     return () => {
-      document.title = 'LocalAGI'; // Reset title when component unmounts
+      document.title = 'IONET'; // Reset title when component unmounts
     };
   }, []);
 

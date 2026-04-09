@@ -14,10 +14,10 @@ function AgentSettings() {
   // Update document title
   useEffect(() => {
     if (name) {
-      document.title = `${name} - Settings - LocalAGI`;
+      document.title = `${name} - Settings - IONET`;
     }
     return () => {
-      document.title = 'LocalAGI';
+      document.title = 'IONET';
     };
   }, [name]);
 

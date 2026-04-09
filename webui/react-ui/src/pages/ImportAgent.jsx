@@ -12,9 +12,9 @@ function ImportAgent() {
   const [showForm, setShowForm] = useState(false);
 
   useEffect(() => {
-    document.title = 'Import Agent - LocalAGI';
+    document.title = 'Import Agent - IONET';
     return () => {
-      document.title = 'LocalAGI';
+      document.title = 'IONET';
     };
   }, []);
 

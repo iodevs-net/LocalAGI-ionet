@@ -8,7 +8,7 @@ export function ThemeProvider({ children }) {
 
   useEffect(() => {
     // Check for saved preference or system preference
-    const savedTheme = localStorage.getItem('localagi-theme');
+    const savedTheme = localStorage.getItem('ionet-theme');
     if (savedTheme) {
       setTheme(savedTheme);
     } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
@@ -21,7 +21,7 @@ export function ThemeProvider({ children }) {
     if (isReady) {
       // Apply theme to document
       document.documentElement.setAttribute('data-theme', theme);
-      localStorage.setItem('localagi-theme', theme);
+      localStorage.setItem('ionet-theme', theme);
     }
   }, [theme, isReady]);
 

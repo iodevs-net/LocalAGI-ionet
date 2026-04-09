@@ -269,10 +269,10 @@ function AgentStatus() {
   // Update document title
   useEffect(() => {
     if (name) {
-      document.title = `${name} - Status - LocalAGI`;
+      document.title = `${name} - Status - IONET`;
     }
     return () => {
-      document.title = 'LocalAGI';
+      document.title = 'IONET';
     };
   }, [name]);
 

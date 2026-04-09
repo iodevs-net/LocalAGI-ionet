@@ -16,9 +16,9 @@ function Home() {
 
   // Update document title
   useEffect(() => {
-    document.title = 'Agent Dashboard - LocalAGI';
+    document.title = 'Agent Dashboard - IONET';
     return () => {
-      document.title = 'LocalAGI'; // Reset title when component unmounts
+      document.title = 'IONET'; // Reset title when component unmounts
     };
   }, []);
 

@@ -48,7 +48,7 @@ function Skills() {
   };
 
   useEffect(() => {
-    document.title = 'Skills - LocalAGI';
+    document.title = 'Skills - IONET';
   }, []);
 
   useEffect(() => {

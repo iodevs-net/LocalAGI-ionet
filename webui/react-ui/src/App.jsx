@@ -55,7 +55,7 @@ function App() {
           <Link to="/" className="sidebar-logo">
             <img 
               src="/app/logo.png" 
-              alt="LocalAGI" 
+              alt="IONET"
               className="sidebar-logo-img"
             />
           </Link>
@@ -93,18 +93,18 @@ function App() {
             className="logout-button"
             id="logout-btn"
             onClick={async () => {
+              // Clear cookies first
+              document.cookie = 'token=; max-age=0; path=/';
+              
+              // Then call backend logout endpoint
               try {
-                const response = await fetch('/logout', { method: 'POST', credentials: 'include' });
-                if (response.ok) {
-                  window.location.href = '/login';
-                } else {
-                  document.cookie = 'token=; max-age=0; path=/';
-                  window.location.href = '/login';
-                }
+                await fetch('/logout', { method: 'POST', credentials: 'include' });
               } catch (e) {
-                document.cookie = 'token=; max-age=0; path=/';
-                window.location.href = '/login';
+                // Ignore errors, we already cleared cookies
               }
+              
+              // Redirect to login page
+              window.location.href = '/login';
             }}
             title="Logout"
           >
@@ -122,7 +122,7 @@ function App() {
           <button className="mobile-menu-btn" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
             <i className="fas fa-bars" />
           </button>
-          <span className="mobile-title">LocalAGI</span>
+          <span className="mobile-title">IONET</span>
           <div className="mobile-spacer" />
         </header>
 

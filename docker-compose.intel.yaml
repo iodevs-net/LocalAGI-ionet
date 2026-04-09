@@ -22,7 +22,7 @@ services:
       file: docker-compose.yaml
       service: dind
 
-  localagi:
+  ionet:
     extends:
       file: docker-compose.yaml
-      service: localagi
+      service: ionet

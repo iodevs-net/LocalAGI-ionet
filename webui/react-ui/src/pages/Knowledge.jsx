@@ -30,7 +30,7 @@ function Knowledge() {
   };
 
   useEffect(() => {
-    document.title = 'Knowledge base - LocalAGI';
+    document.title = 'Knowledge base - IONET';
     fetchCollections();
   }, []);
 

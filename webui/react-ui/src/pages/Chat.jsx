@@ -26,10 +26,10 @@ function Chat() {
   // Update document title
   useEffect(() => {
     if (name) {
-      document.title = `Chat with ${name} - LocalAGI`;
+      document.title = `Chat with ${name} - IONET`;
     }
     return () => {
-      document.title = 'LocalAGI'; // Reset title when component unmounts
+      document.title = 'IONET'; // Reset title when component unmounts
     };
   }, [name]);
 

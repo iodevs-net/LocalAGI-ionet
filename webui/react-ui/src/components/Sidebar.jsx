@@ -32,9 +32,9 @@ const Sidebar = ({ children }) => {
         <div className="sidebar-header">
           <Link to="/" className="sidebar-logo" onClick={closeMobile}>
             <div className="logo-icon">
-              <img src="/app/logo.png" alt="LocalAGI" />
+              <img src="/app/logo.png" alt="IONET" />
             </div>
-            {!collapsed && <span className="logo-text">LocalAGI</span>}
+            {!collapsed && <span className="logo-text">IONET</span>}
           </Link>
           <button 
             className="sidebar-toggle desktop-only" 
@@ -77,7 +77,17 @@ const Sidebar = ({ children }) => {
           <button
             className="logout-button"
             onClick={() => {
-              document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Strict';
+              // Clear cookies first
+              document.cookie = 'token=; max-age=0; path=/';
+              
+              // Then call backend logout endpoint
+              try {
+                fetch('/logout', { method: 'POST', credentials: 'include' });
+              } catch (e) {
+                // Ignore errors
+              }
+              
+              // Redirect to login page
               window.location.href = '/login';
             }}
             title="Logout"
@@ -95,7 +105,7 @@ const Sidebar = ({ children }) => {
           <button className="mobile-menu-btn" onClick={toggleMobile}>
             <i className="fas fa-bars" />
           </button>
-          <span className="mobile-title">LocalAGI</span>
+          <span className="mobile-title">IONET</span>
         </header>
 
         {/* Page Content */}

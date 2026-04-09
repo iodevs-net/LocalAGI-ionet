@@ -233,7 +233,7 @@ function SkillEdit() {
   });
 
   useEffect(() => {
-    document.title = isNew ? 'New skill - LocalAGI' : `Edit ${name} - LocalAGI`;
+    document.title = isNew ? 'New skill - IONET' : `Edit ${name} - IONET`;
     if (isNew) {
       setLoading(false);
       return;

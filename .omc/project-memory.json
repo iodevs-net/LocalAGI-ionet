@@ -1,0 +1,471 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1775681064972,
+  "projectRoot": "/home/leonardo/dev/proyectos/LocalAGI-ionet",
+  "techStack": {
+    "languages": [
+      {
+        "name": "JavaScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "jsconfig.json"
+        ]
+      },
+      {
+        "name": "Go",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "go.mod"
+        ]
+      },
+      {
+        "name": "C/C++",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "Makefile"
+        ]
+      }
+    ],
+    "frameworks": [],
+    "packageManager": "go",
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": "make build",
+    "testCommand": "make test",
+    "lintCommand": null,
+    "devCommand": null,
+    "scripts": {}
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": null
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [
+      "tests"
+    ],
+    "gitBranches": {
+      "defaultBranch": "main",
+      "branchingStrategy": null
+    }
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "cmd": {
+      "path": "cmd",
+      "purpose": null,
+      "fileCount": 5,
+      "lastAccessed": 1775681064959,
+      "keyFiles": [
+        "agent.go",
+        "agent_run.go",
+        "env.go",
+        "root.go",
+        "serve.go"
+      ]
+    },
+    "core": {
+      "path": "core",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1775681064965,
+      "keyFiles": []
+    },
+    "example": {
+      "path": "example",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1775681064966,
+      "keyFiles": []
+    },
+    "pkg": {
+      "path": "pkg",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1775681064969,
+      "keyFiles": []
+    },
+    "services": {
+      "path": "services",
+      "purpose": "Business logic services",
+      "fileCount": 5,
+      "lastAccessed": 1775681064969,
+      "keyFiles": [
+        "actions.go",
+        "common.go",
+        "connectors.go",
+        "filters.go",
+        "prompts.go"
+      ]
+    },
+    "tests": {
+      "path": "tests",
+      "purpose": "Test files",
+      "fileCount": 0,
+      "lastAccessed": 1775681064970,
+      "keyFiles": []
+    },
+    "webui": {
+      "path": "webui",
+      "purpose": null,
+      "fileCount": 10,
+      "lastAccessed": 1775681064970,
+      "keyFiles": [
+        "app.go",
+        "collections_backend.go",
+        "collections_backend_http.go",
+        "collections_backend_inprocess.go",
+        "collections_handlers.go"
+      ]
+    },
+    "core/types": {
+      "path": "core/types",
+      "purpose": "Type definitions",
+      "fileCount": 8,
+      "lastAccessed": 1775681064970,
+      "keyFiles": [
+        "actions.go",
+        "conversation.go",
+        "filters.go"
+      ]
+    },
+    "pkg/config": {
+      "path": "pkg/config",
+      "purpose": "Configuration files",
+      "fileCount": 1,
+      "lastAccessed": 1775681064971,
+      "keyFiles": [
+        "meta.go"
+      ]
+    },
+    "pkg/utils": {
+      "path": "pkg/utils",
+      "purpose": "Utility functions",
+      "fileCount": 1,
+      "lastAccessed": 1775681064971,
+      "keyFiles": [
+        "html.go"
+      ]
+    },
+    "webui/public": {
+      "path": "webui/public",
+      "purpose": "Public files",
+      "fileCount": 1,
+      "lastAccessed": 1775681064971,
+      "keyFiles": [
+        "logo_1.png"
+      ]
+    }
+  },
+  "hotPaths": [
+    {
+      "path": "",
+      "accessCount": 10,
+      "lastAccessed": 1775687884611,
+      "type": "directory"
+    },
+    {
+      "path": "docker-compose.yaml",
+      "accessCount": 8,
+      "lastAccessed": 1775685881746,
+      "type": "file"
+    },
+    {
+      "path": ".env",
+      "accessCount": 6,
+      "lastAccessed": 1775685841786,
+      "type": "file"
+    },
+    {
+      "path": "README.md",
+      "accessCount": 5,
+      "lastAccessed": 1775681718056,
+      "type": "file"
+    },
+    {
+      "path": "core/agent/mcp.go",
+      "accessCount": 4,
+      "lastAccessed": 1775681401150,
+      "type": "file"
+    },
+    {
+      "path": "webui/react-ui/src/components/Sidebar.jsx",
+      "accessCount": 4,
+      "lastAccessed": 1775681910092,
+      "type": "file"
+    },
+    {
+      "path": "webui/react-ui/src/App.jsx",
+      "accessCount": 4,
+      "lastAccessed": 1775685700786,
+      "type": "file"
+    },
+    {
+      "path": "cmd/root.go",
+      "accessCount": 3,
+      "lastAccessed": 1775681501675,
+      "type": "file"
+    },
+    {
+      "path": "webui/react-ui/src/pages/AgentStatus.jsx",
+      "accessCount": 3,
+      "lastAccessed": 1775681589008,
+      "type": "file"
+    },
+    {
+      "path": "webui/react-ui/src/pages/Knowledge.jsx",
+      "accessCount": 3,
+      "lastAccessed": 1775681613676,
+      "type": "file"
+    },
+    {
+      "path": "webui/react-ui/src/pages/SkillEdit.jsx",
+      "accessCount": 3,
+      "lastAccessed": 1775681613697,
+      "type": "file"
+    },
+    {
+      "path": "webui/react-ui/src/pages/GroupCreate.jsx",
+      "accessCount": 3,
+      "lastAccessed": 1775681613713,
+      "type": "file"
+    },
+    {
+      "path": "webui/react-ui/src/pages/ImportAgent.jsx",
+      "accessCount": 3,
+      "lastAccessed": 1775681613729,
+      "type": "file"
+    },
+    {
+      "path": "docker-compose.nvidia.yaml",
+      "accessCount": 3,
+      "lastAccessed": 1775681647691,
+      "type": "file"
+    },
+    {
+      "path": "docker-compose.amd.yaml",
+      "accessCount": 3,
+      "lastAccessed": 1775681647900,
+      "type": "file"
+    },
+    {
+      "path": "docker-compose.intel.yaml",
+      "accessCount": 3,
+      "lastAccessed": 1775681648154,
+      "type": "file"
+    },
+    {
+      "path": ".goreleaser.yml",
+      "accessCount": 3,
+      "lastAccessed": 1775681687189,
+      "type": "file"
+    },
+    {
+      "path": "webui/react-ui/package.json",
+      "accessCount": 2,
+      "lastAccessed": 1775681284269,
+      "type": "file"
+    },
+    {
+      "path": "Dockerfile.webui",
+      "accessCount": 2,
+      "lastAccessed": 1775681367210,
+      "type": "file"
+    },
+    {
+      "path": "webui/react-ui/src/contexts/ThemeContext.jsx",
+      "accessCount": 2,
+      "lastAccessed": 1775681540517,
+      "type": "file"
+    },
+    {
+      "path": "webui/public/views/partials/header.html",
+      "accessCount": 2,
+      "lastAccessed": 1775681540735,
+      "type": "file"
+    },
+    {
+      "path": "webui/public/views/login.html",
+      "accessCount": 2,
+      "lastAccessed": 1775681560600,
+      "type": "file"
+    },
+    {
+      "path": "webui/react-ui/src/App.css",
+      "accessCount": 2,
+      "lastAccessed": 1775681560820,
+      "type": "file"
+    },
+    {
+      "path": "webui/react-ui/src/index.css",
+      "accessCount": 2,
+      "lastAccessed": 1775681561018,
+      "type": "file"
+    },
+    {
+      "path": "webui/react-ui/src/theme.css",
+      "accessCount": 2,
+      "lastAccessed": 1775681561214,
+      "type": "file"
+    },
+    {
+      "path": "webui/react-ui/src/pages/ActionsPlayground.jsx",
+      "accessCount": 2,
+      "lastAccessed": 1775681578632,
+      "type": "file"
+    },
+    {
+      "path": "webui/react-ui/src/pages/Chat.jsx",
+      "accessCount": 2,
+      "lastAccessed": 1775681578880,
+      "type": "file"
+    },
+    {
+      "path": "webui/react-ui/src/pages/AgentSettings.jsx",
+      "accessCount": 2,
+      "lastAccessed": 1775681579280,
+      "type": "file"
+    },
+    {
+      "path": "webui/react-ui/src/pages/CreateAgent.jsx",
+      "accessCount": 2,
+      "lastAccessed": 1775681579501,
+      "type": "file"
+    },
+    {
+      "path": "webui/react-ui/src/pages/Home.jsx",
+      "accessCount": 2,
+      "lastAccessed": 1775681604504,
+      "type": "file"
+    },
+    {
+      "path": "webui/react-ui/src/pages/AgentsList.jsx",
+      "accessCount": 2,
+      "lastAccessed": 1775681604695,
+      "type": "file"
+    },
+    {
+      "path": "webui/react-ui/src/pages/Skills.jsx",
+      "accessCount": 2,
+      "lastAccessed": 1775681604896,
+      "type": "file"
+    },
+    {
+      "path": "cmd/serve.go",
+      "accessCount": 2,
+      "lastAccessed": 1775681809016,
+      "type": "file"
+    },
+    {
+      "path": "core/state/pool.go",
+      "accessCount": 2,
+      "lastAccessed": 1775681862514,
+      "type": "file"
+    },
+    {
+      "path": "deploy.sh",
+      "accessCount": 2,
+      "lastAccessed": 1775681893388,
+      "type": "file"
+    },
+    {
+      "path": "Makefile",
+      "accessCount": 1,
+      "lastAccessed": 1775681244244,
+      "type": "file"
+    },
+    {
+      "path": "main.go",
+      "accessCount": 1,
+      "lastAccessed": 1775681244326,
+      "type": "file"
+    },
+    {
+      "path": "Dockerfile.realtimesst",
+      "accessCount": 1,
+      "lastAccessed": 1775681252627,
+      "type": "file"
+    },
+    {
+      "path": "Dockerfile.sshbox",
+      "accessCount": 1,
+      "lastAccessed": 1775681252680,
+      "type": "file"
+    },
+    {
+      "path": "go.mod",
+      "accessCount": 1,
+      "lastAccessed": 1775681252698,
+      "type": "file"
+    },
+    {
+      "path": "cmd/agent.go",
+      "accessCount": 1,
+      "lastAccessed": 1775681261696,
+      "type": "file"
+    },
+    {
+      "path": "slack.yaml",
+      "accessCount": 1,
+      "lastAccessed": 1775681261830,
+      "type": "file"
+    },
+    {
+      "path": "start_realtimesst.sh",
+      "accessCount": 1,
+      "lastAccessed": 1775681268577,
+      "type": "file"
+    },
+    {
+      "path": "webui/react-ui",
+      "accessCount": 1,
+      "lastAccessed": 1775681268661,
+      "type": "directory"
+    },
+    {
+      "path": "services/actions.go",
+      "accessCount": 1,
+      "lastAccessed": 1775681275821,
+      "type": "file"
+    },
+    {
+      "path": "webui/react-ui/vite.config.js",
+      "accessCount": 1,
+      "lastAccessed": 1775681275879,
+      "type": "file"
+    },
+    {
+      "path": "core/agent/agent.go",
+      "accessCount": 1,
+      "lastAccessed": 1775681276323,
+      "type": "file"
+    },
+    {
+      "path": "core/state/config.go",
+      "accessCount": 1,
+      "lastAccessed": 1775681396282,
+      "type": "file"
+    },
+    {
+      "path": "cmd/env.go",
+      "accessCount": 1,
+      "lastAccessed": 1775681401120,
+      "type": "file"
+    },
+    {
+      "path": ".env.example",
+      "accessCount": 1,
+      "lastAccessed": 1775681832357,
+      "type": "file"
+    }
+  ],
+  "userDirectives": []
+}
