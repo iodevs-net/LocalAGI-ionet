@@ -1,0 +1,116 @@
+# =============================================================================
+# IONET - Docker Compose Production
+# Uso: docker compose -f docker-compose.prod.yaml up -d
+# =============================================================================
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ionet-postgres
+    environment:
+      - POSTGRES_DB=ionet
+      - POSTGRES_USER=ionet
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - postgres_backup:/backup
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ionet"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - ionet-network
+    # Limitar recursos en producción
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+  ionet:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: prod
+      args:
+        - MODE=prod
+    image: ionet:${IMAGE_TAG:-latest}
+    container_name: ionet
+    environment:
+      # API LLM (configurar según proveedor)
+      - OPENAI_BASE_URL=${OPENAI_BASE_URL}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - LOCALAGI_MODEL=${MODEL_NAME}
+      - LOCALAGI_MULTIMODAL_MODEL=${MULTIMODAL_MODEL}
+      - LOCALAGI_LLM_API_URL=${OPENAI_BASE_URL}
+      - LOCALAGI_LLM_API_KEY=${OPENAI_API_KEY}
+      
+      # Seguridad - API Keys separadas por coma
+      - LOCALAGI_API_KEYS=${LOCALAGI_API_KEYS}
+      
+      # Configuración
+      - LOCALAGI_STATE_DIR=/pool
+      - LOCALAGI_TIMEOUT=${TIMEOUT:-5m}
+      - LOCALAGI_ENABLE_CONVERSATIONS_LOGGING=${ENABLE_LOGGING:-false}
+      - LOCALAGI_BASE_URL=https://agentes.ionet.cl
+      
+      # Base de datos
+      - VECTOR_ENGINE=postgres
+      - DATABASE_URL=postgresql://ionet:${POSTGRES_PASSWORD}@postgres:5432/ionet?sslmode=disable
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL}
+      
+      # M365 Sync (para scripts de sync)
+      - M365_CLIENT_ID=${M365_CLIENT_ID}
+      - M365_CLIENT_SECRET=${M365_CLIENT_SECRET}
+      - M365_TENANT_ID=${M365_TENANT_ID}
+      
+    ports:
+      # App
+      - "8080:8080"
+      # SSH (para acceso directo al contenedor)
+      - "2222:2222"
+    volumes:
+      # Pool persistente para estado
+      - ionet_pool:/pool
+      # RAG data
+      - rag_data:/rag
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - ionet-network
+    # Healthcheck
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    # Limitar recursos en producción
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
+
+volumes:
+  postgres_data:
+    name: ionet-postgres-data
+    driver: local
+  postgres_backup:
+    name: ionet-postgres-backup
+    driver: local
+  ionet_pool:
+    name: ionet-pool
+    driver: local
+  rag_data:
+    name: ionet-rag-data
+    driver: local
+
+networks:
+  ionet-network:
+    name: ionet-network
+    driver: bridge

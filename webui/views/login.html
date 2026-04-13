@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LocalAGI - Login</title>
+    <title>IONET - Login</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -301,33 +301,33 @@
         <div class="login-container">
             <!-- Logo -->
             <div class="login-logo">
-                <img src="/public/logo_1.png" alt="LocalAGI Logo" width="180">
+                <img src="/public/logo_1.png" alt="IONET Logo" width="180">
             </div>
             
             <!-- Auth Card -->
             <div class="login-card">
                 <div class="login-card-header">
-                    <h2>Authorization Required</h2>
-                    <p>Please enter your access token to continue</p>
+                    <h2>Acceso IONET</h2>
+                    <p>Ingresa tu token de acceso para continuar</p>
                 </div>
                 
                 <form id="login-form" onsubmit="login(); return false;">
                     <div class="form-group">
-                        <label for="token">Access Token</label>
+                        <label for="token">Token de Acceso</label>
                         <div class="input-wrapper">
                             <span class="input-icon"><i class="fas fa-key"></i></span>
                             <input 
                                 type="password" 
                                 id="token" 
                                 name="token" 
-                                placeholder="Enter your token" 
+                                placeholder="Ingresa tu token" 
                                 required
                             />
                         </div>
                     </div>
                     
                     <button type="submit" class="login-button">
-                        <span>Login</span>
+                        <span>Entrar</span>
                         <i class="fas fa-arrow-right"></i>
                     </button>
                     
@@ -337,7 +337,7 @@
                 <div class="login-footer">
                     <div class="security-badge">
                         <i class="fas fa-shield-alt"></i>
-                        <span>Instance is token protected</span>
+                        <span>Instancia protegida con token</span>
                     </div>
                     <p class="time-display">Current time (UTC): <span id="current-time">{{.CurrentDate}}</span></p>
                 </div>

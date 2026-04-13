@@ -1,0 +1,83 @@
+# =============================================================================
+# IONET - Docker Compose Development
+# Uso: docker compose -f docker-compose.dev.yaml up
+# =============================================================================
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ionet-postgres-dev
+    environment:
+      - POSTGRES_DB=ionet
+      - POSTGRES_USER=ionet
+      - POSTGRES_PASSWORD=ionet_dev
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ionet"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ionet-dev
+
+  ionet:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: dev
+      args:
+        - MODE=dev
+    container_name: ionet-dev
+    environment:
+      # API LLM (configurar según proveedor)
+      - OPENAI_BASE_URL=${OPENAI_BASE_URL:-https://api.minimax.io/v1}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - LOCALAGI_MODEL=${MODEL_NAME:-MiniMax-M2.7}
+      - LOCALAGI_MULTIMODAL_MODEL=${MULTIMODAL_MODEL:-MiniMax-M2.7}
+      - LOCALAGI_LLM_API_URL=${OPENAI_BASE_URL}
+      - LOCALAGI_LLM_API_KEY=${OPENAI_API_KEY}
+      
+      # Seguridad
+      - LOCALAGI_API_KEYS=${LOCALAGI_API_KEYS:-dev-api-key-12345}
+      
+      # Configuración
+      - LOCALAGI_STATE_DIR=/pool
+      - LOCALAGI_TIMEOUT=5m
+      - LOCALAGI_ENABLE_CONVERSATIONS_LOGGING=true
+      - LOCALAGI_BASE_URL=http://localhost:8090
+      
+      # Base de datos
+      - VECTOR_ENGINE=chromem
+      - DATABASE_URL=postgresql://ionet:ionet_dev@postgres:5432/ionet?sslmode=disable
+      
+    ports:
+      - "8090:3000"
+    volumes:
+      # Montar código fuente para hot-reload
+      - .:/app
+      # Pool para estado de agentes
+      - ionet_pool_dev:/pool
+      # Base de datos RAG
+      - chroma_dev_data:/chromadb
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - ionet-dev
+    # Restart policy para desarrollo
+    restart: unless-stopped
+
+volumes:
+  postgres_dev_data:
+    name: ionet-postgres-dev-data
+  ionet_pool_dev:
+    name: ionet-pool-dev
+  chroma_dev_data:
+    name: ionet-chroma-dev-data
+
+networks:
+  ionet-dev:
+    name: ionet-dev-network
