@@ -69,6 +69,7 @@ LABEL maintainer="IONET <info@ionet.cl>"
 LABEL description="IONET - Agente IA interno para ionet.cl"
 
 ENV DEBIAN_FRONTEND=noninteractive
+ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=America/Santiago
 
 # Instalar runtime dependencies
@@ -87,7 +88,7 @@ COPY --from=binary-builder /build/localagi /usr/local/bin/
 COPY --from=ui-builder /app/dist /app/webui/dist
 
 # Crear usuario para SSH (mejor práctica de seguridad)
-RUN useradd -m -s /bin/bash ionet && \
+RUN useradd -m -s /bin/bash procps \&& rm -rf /var/lib/apt/lists/* ionet && \
     echo "ionet:ionet" | chpasswd
 
 # Instalar y configurar SSH
@@ -129,15 +130,16 @@ ENTRYPOINT ["/entrypoint.sh"]
 # =============================================================================
 # STAGE 5: Dev Image (para desarrollo local)
 # =============================================================================
-FROM alpine:3.19 AS dev
+FROM ubuntu:24.04 AS dev
 
 LABEL maintainer="IONET <info@ionet.cl>"
 LABEL description="IONET - Desarrollo local"
 
+ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=America/Santiago
 
 # Instalar runtime mínimos + herramientas de desarrollo
-RUN apk add --no-cache \
+RUN apt-get update && apt-get install -y \
     ca-certificates \
     curl \
     tzdata \
