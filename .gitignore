@@ -10,3 +10,7 @@ LocalAGI
 volumes/
 example/scheduler/scheduler
 example/scheduler/example_tasks.json
+
+# Build artifacts
+localagi-
+.serena/
