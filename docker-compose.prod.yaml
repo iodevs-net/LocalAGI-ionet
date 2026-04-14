@@ -33,8 +33,6 @@ services:
       context: .
       dockerfile: Dockerfile
       target: prod
-      args:
-        - MODE=prod
     image: ionet:${IMAGE_TAG:-latest}
     container_name: ionet
     environment:
