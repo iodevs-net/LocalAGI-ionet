@@ -17,11 +17,11 @@
   "connector": [
     {
       "type": "email",
-      "config": "{\n  \"smtpServer\": \"smtp.gmail.com:587\",\n  \"imapServer\": \"imap.gmail.com:993\",\n  \"smtpInsecure\": false,\n  \"imapInsecure\": false,\n  \"username\": \"el.agente.ion@gmail.com\",\n  \"email\": \"el.agente.ion@gmail.com\",\n  \"password\": \"lydc yyja fnfr pooh\"\n}"
+      "config": "{\n  \"smtpServer\": \"smtp.gmail.com:587\",\n  \"imapServer\": \"imap.gmail.com:993\",\n  \"smtpInsecure\": false,\n  \"imapInsecure\": false,\n  \"username\": \"${ION_EMAIL_USER}\",\n  \"email\": \"${ION_EMAIL_USER}\",\n  \"password\": \"${ION_EMAIL_PASSWORD}\"\n}"
     },
     {
       "type": "teams",
-      "config": "{\n  \"webhookUrl\": \"https://ionet.webhook.office.com/webhookb2/xxx\"\n}"
+      "config": "{\n  \"webhookUrl\": \"${TEAMS_WEBHOOK_URL}\"\n}"
     }
   ],
   "hud": false,
