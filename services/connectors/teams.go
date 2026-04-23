@@ -65,6 +65,18 @@ func (t *TeamsConnector) SendMessage(text string) error {
 	return nil
 }
 
+func (t *TeamsConnector) AgentResultCallback() func(state types.ActionState) {
+	return nil
+}
+
+func (t *TeamsConnector) AgentReasoningCallback() func(state types.ActionCurrentState) bool {
+	return nil
+}
+
+func (t *TeamsConnector) Start(a *agent.Agent) {
+	// Teams connector currently only supports outgoing messages via webhook
+}
+
 // TeamsConfigMeta - Returns configuration fields for Teams connector
 func TeamsConfigMeta() []config.Field {
 	return []config.Field{
