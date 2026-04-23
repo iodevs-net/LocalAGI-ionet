@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/mudler/LocalAGI/pkg/config"
-	"github.com/mudler/LocalAGI/pkg/xlog"
+	"github.com/mudler/xlog"
 )
 
 // TeamsConnector - KISS integration with Microsoft Teams via Incoming Webhook
