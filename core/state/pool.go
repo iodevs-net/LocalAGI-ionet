@@ -101,9 +101,51 @@ func loadPoolFromFile(path string) (*AgentPoolData, error) {
 		return nil, err
 	}
 
+	// Expand environment variables
+	data = []byte(os.ExpandEnv(string(data)))
+
 	poolData := &AgentPoolData{}
 	err = json.Unmarshal(data, poolData)
 	return poolData, err
+}
+
+func loadAgentsFromDirectory(dir string) (AgentPoolData, error) {
+	agents := make(AgentPoolData)
+	files, err := os.ReadDir(dir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return agents, nil
+		}
+		return nil, err
+	}
+
+	for _, f := range files {
+		if f.IsDir() || !strings.HasSuffix(f.Name(), ".json") || f.Name() == "pool.json" {
+			continue
+		}
+		path := filepath.Join(dir, f.Name())
+		data, err := os.ReadFile(path)
+		if err != nil {
+			xlog.Warnf("failed to read agent file %s: %v", path, err)
+			continue
+		}
+
+		// Expand environment variables
+		data = []byte(os.ExpandEnv(string(data)))
+
+		var config AgentConfig
+		if err := json.Unmarshal(data, &config); err != nil {
+			xlog.Warnf("failed to unmarshal agent config from %s: %v", path, err)
+			continue
+		}
+
+		name := strings.TrimSuffix(f.Name(), ".json")
+		if config.Name != "" {
+			name = config.Name
+		}
+		agents[name] = config
+	}
+	return agents, nil
 }
 
 func NewAgentPool(
@@ -125,46 +167,36 @@ func NewAgentPool(
 	if withLogs {
 		conversationPath = filepath.Join(directory, "conversations")
 	}
-	if _, err := os.Stat(poolfile); err != nil {
-		// file does not exist, create a new pool
-		return &AgentPool{
-			file:                         poolfile,
-			pooldir:                      directory,
-			apiURL:                       apiURL,
-			defaultModel:                 defaultModel,
-			defaultMultimodalModel:       defaultMultimodalModel,
-			defaultTranscriptionModel:    defaultTranscriptionModel,
-			defaultTranscriptionLanguage: defaultTranscriptionLanguage,
-			defaultTTSModel:              defaultTTSModel,
-			apiKey:                       apiKey,
-			agents:                       make(map[string]*Agent),
-			pool:                         make(map[string]AgentConfig),
-			agentStatus:                  make(map[string]*Status),
-			managers:                     make(map[string]sseLib.Manager),
-			connectors:                   connectors,
-			availableActions:             availableActions,
-			dynamicPrompt:                promptBlocks,
-			filters:                      filters,
-			timeout:                      timeout,
-			conversationLogs:             conversationPath,
-			skillsService:                skillsService,
-		}, nil
-	}
-
-	poolData, err := loadPoolFromFile(poolfile)
-	if err != nil {
-		bakPath := poolfile + ".bak"
-		poolData, err = loadPoolFromFile(bakPath)
+	poolData := &AgentPoolData{}
+	if _, err := os.Stat(poolfile); err == nil {
+		p, err := loadPoolFromFile(poolfile)
 		if err != nil {
-			xlog.Warn("Pool file invalid and backup missing or invalid, starting with empty pool", "poolfile", poolfile, "error", err)
-			poolData = &AgentPoolData{}
-		} else {
-			xlog.Info("Recovered pool from backup, repairing main file", "poolfile", poolfile)
-			if repairData, _ := json.MarshalIndent(poolData, "", "  "); len(repairData) > 0 {
-				_ = os.WriteFile(poolfile, repairData, 0644)
+			bakPath := poolfile + ".bak"
+			p, err = loadPoolFromFile(bakPath)
+			if err != nil {
+				xlog.Warn("Pool file invalid and backup missing or invalid, starting with empty pool", "poolfile", poolfile, "error", err)
+				p = &AgentPoolData{}
+			} else {
+				xlog.Info("Recovered pool from backup, repairing main file", "poolfile", poolfile)
+				if repairData, _ := json.MarshalIndent(p, "", "  "); len(repairData) > 0 {
+					_ = os.WriteFile(poolfile, repairData, 0644)
+				}
 			}
 		}
+		poolData = p
 	}
+
+	// Load extra agents from agents/ directory
+	agentsDir := filepath.Join(directory, "agents")
+	extraAgents, err := loadAgentsFromDirectory(agentsDir)
+	if err != nil {
+		xlog.Warnf("failed to load agents from directory %s: %v", agentsDir, err)
+	} else {
+		for name, config := range extraAgents {
+			(*poolData)[name] = config
+		}
+	}
+
 	return &AgentPool{
 		file:                         poolfile,
 		apiURL:                       apiURL,
