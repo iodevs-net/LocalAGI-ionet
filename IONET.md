@@ -1,4 +1,4 @@
-# IONET - Agente IA Interno para ionet.cl
+# Plataforma de Agentes IA para ionet.cl
 
 Fork de [LocalAGI](https://github.com/mudler/LocalAGI) personalizado para uso interno de IONET.
 

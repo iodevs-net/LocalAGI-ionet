@@ -20,7 +20,7 @@ jobs:
       - name: Prepare
         id: prep
         run: |
-          DOCKER_IMAGE=quay.io/mudler/localagi
+          DOCKER_IMAGE=ghcr.io/iodevs-net/localagi-ionet
           # Use branch name as default
           VERSION=${GITHUB_REF#refs/heads/}
           BINARY_VERSION=$(git describe --always --tags --dirty)
@@ -49,18 +49,18 @@ jobs:
         id: buildx
         uses: docker/setup-buildx-action@master
 
-      - name: Login to DockerHub
+      - name: Login to GHCR
         if: github.event_name != 'pull_request'
         uses: docker/login-action@v3
         with:
-          registry: quay.io
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GHCR_TOKEN }}
       - name: Extract metadata (tags, labels) for Docker
         id: meta
         uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051
         with:
-          images: quay.io/mudler/localagi
+          images: ghcr.io/iodevs-net/localagi-ionet
           tags: |
             type=ref,event=branch,suffix=-{{date 'YYYYMMDDHHmmss'}}
             type=semver,pattern={{raw}}
@@ -123,18 +123,18 @@ jobs:
         id: buildx
         uses: docker/setup-buildx-action@master
 
-      - name: Login to DockerHub
+      - name: Login to GHCR
         if: github.event_name != 'pull_request'
         uses: docker/login-action@v3
         with:
-          registry: quay.io
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GHCR_TOKEN }}
       - name: Extract metadata (tags, labels) for Docker
         id: meta
-        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051
+        uses: docker/metadata-action@v5
         with:
-          images: quay.io/mudler/localagi-sshbox
+          images: ghcr.io/iodevs-net/localagi-sshbox
           tags: |
             type=ref,event=branch,suffix=-{{date 'YYYYMMDDHHmmss'}}
             type=semver,pattern={{raw}}
@@ -158,3 +158,22 @@ jobs:
           #tags: ${{ steps.prep.outputs.tags }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+  deploy:
+    name: 'Deploy to Hetzner'
+    runs-on: ubuntu-latest
+    needs: [containerImages]
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: 'SSH into Hetzner and update'
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HETZNER_HOST }}
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /opt/ionet
+            echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
+            docker compose -f docker-compose.prod.yaml pull
+            docker compose -f docker-compose.prod.yaml up -d
+            docker system prune -f

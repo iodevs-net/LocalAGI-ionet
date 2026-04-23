@@ -29,10 +29,7 @@ services:
           memory: 1G
 
   ionet:
-    build:
-      context: .
-      dockerfile: Dockerfile.webui
-    image: ionet:${IMAGE_TAG:-latest}
+    image: ghcr.io/iodevs-net/localagi-ionet:latest
     container_name: ionet
     environment:
       # API LLM (configurar según proveedor)
@@ -61,7 +58,12 @@ services:
       - M365_CLIENT_ID=${M365_CLIENT_ID}
       - M365_CLIENT_SECRET=${M365_CLIENT_SECRET}
       - M365_TENANT_ID=${M365_TENANT_ID}
-      
+
+      # ION Connectors
+      - ION_EMAIL_USER=${ION_EMAIL_USER}
+      - ION_EMAIL_PASSWORD=${ION_EMAIL_PASSWORD}
+      - TEAMS_WEBHOOK_URL=${TEAMS_WEBHOOK_URL}
+
     ports:
       # App
       - "8080:8080"
