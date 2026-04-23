@@ -126,7 +126,7 @@ func loadAgentsFromDirectory(dir string) (AgentPoolData, error) {
 		path := filepath.Join(dir, f.Name())
 		data, err := os.ReadFile(path)
 		if err != nil {
-			xlog.Warnf("failed to read agent file %s: %v", path, err)
+			xlog.Warn("failed to read agent file", "path", path, "error", err)
 			continue
 		}
 
@@ -135,7 +135,7 @@ func loadAgentsFromDirectory(dir string) (AgentPoolData, error) {
 
 		var config AgentConfig
 		if err := json.Unmarshal(data, &config); err != nil {
-			xlog.Warnf("failed to unmarshal agent config from %s: %v", path, err)
+			xlog.Warn("failed to unmarshal agent config", "path", path, "error", err)
 			continue
 		}
 
@@ -190,7 +190,7 @@ func NewAgentPool(
 	agentsDir := filepath.Join(directory, "agents")
 	extraAgents, err := loadAgentsFromDirectory(agentsDir)
 	if err != nil {
-		xlog.Warnf("failed to load agents from directory %s: %v", agentsDir, err)
+		xlog.Warn("failed to load agents from directory", "directory", agentsDir, "error", err)
 	} else {
 		for name, config := range extraAgents {
 			(*poolData)[name] = config
