@@ -61,7 +61,12 @@ services:
       - M365_CLIENT_ID=${M365_CLIENT_ID}
       - M365_CLIENT_SECRET=${M365_CLIENT_SECRET}
       - M365_TENANT_ID=${M365_TENANT_ID}
-      
+
+      # ION Connectors
+      - ION_EMAIL_USER=${ION_EMAIL_USER}
+      - ION_EMAIL_PASSWORD=${ION_EMAIL_PASSWORD}
+      - TEAMS_WEBHOOK_URL=${TEAMS_WEBHOOK_URL}
+
     ports:
       # App
       - "8080:8080"
