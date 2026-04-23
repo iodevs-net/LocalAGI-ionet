@@ -29,10 +29,7 @@ services:
           memory: 1G
 
   ionet:
-    build:
-      context: .
-      dockerfile: Dockerfile.webui
-    image: ionet:${IMAGE_TAG:-latest}
+    image: ghcr.io/iodevs-net/localagi-ionet:latest
     container_name: ionet
     environment:
       # API LLM (configurar según proveedor)
