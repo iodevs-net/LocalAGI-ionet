@@ -71,8 +71,8 @@ func TeamsConfigMeta() []config.Field {
 		{
 			Name:        "webhookUrl",
 			Label:       "Webhook URL",
-			Type:        "string",
-			Description: "Incoming Webhook URL from Teams Channel (Connectors > Incoming Webhook)",
+			Type:        config.FieldTypeText,
+			HelpText:    "Incoming Webhook URL from Teams Channel (Connectors > Incoming Webhook)",
 			Required:    true,
 		},
 	}
