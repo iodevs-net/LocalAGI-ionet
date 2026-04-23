@@ -56,6 +56,10 @@ WORKDIR /app
 COPY --from=builder /build/localagi /usr/local/bin/
 COPY --from=ui-builder /app/dist /app/webui/dist
 
+# Copiar agentes pre-configurados (auto-importación)
+RUN mkdir -p /pool/agents
+COPY config/agents/*.json /pool/agents/
+
 # Configurar SSH
 RUN mkdir /var/run/sshd && \
     sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config && \
@@ -95,6 +99,10 @@ WORKDIR /app
 # Copiar binary y frontend
 COPY --from=builder /build/localagi /usr/local/bin/
 COPY --from=ui-builder /app/dist /app/webui/dist
+
+# Copiar agentes pre-configurados (auto-importación)
+RUN mkdir -p /pool/agents
+COPY config/agents/*.json /pool/agents/
 
 # Crear estructura de directorios
 RUN mkdir -p /app/core /app/pkg /app/services /app/webui /app/cmd /pool
