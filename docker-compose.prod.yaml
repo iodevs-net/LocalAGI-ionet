@@ -33,6 +33,7 @@ services:
       dockerfile: Dockerfile.webui
     image: ionet:${IMAGE_TAG:-latest}
     container_name: agente-ION
+    environment:
       # API LLM (configurar según proveedor)
       - OPENAI_BASE_URL=${OPENAI_BASE_URL}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
