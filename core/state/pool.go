@@ -109,45 +109,7 @@ func loadPoolFromFile(path string) (*AgentPoolData, error) {
 	return poolData, err
 }
 
-func loadAgentsFromDirectory(dir string) (AgentPoolData, error) {
-	agents := make(AgentPoolData)
-	files, err := os.ReadDir(dir)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return agents, nil
-		}
-		return nil, err
-	}
-
-	for _, f := range files {
-		if f.IsDir() || !strings.HasSuffix(f.Name(), ".json") || f.Name() == "pool.json" {
-			continue
-		}
-		path := filepath.Join(dir, f.Name())
-		data, err := os.ReadFile(path)
-		if err != nil {
-			xlog.Warn("failed to read agent file", "path", path, "error", err)
-			continue
-		}
-
-		// Expand environment variables
-		data = []byte(os.ExpandEnv(string(data)))
-
-		var config AgentConfig
-		if err := json.Unmarshal(data, &config); err != nil {
-			xlog.Warn("failed to unmarshal agent config", "path", path, "error", err)
-			continue
-		}
-
-		name := strings.TrimSuffix(f.Name(), ".json")
-		if config.Name != "" {
-			name = config.Name
-		}
-		agents[name] = config
-	}
-	return agents, nil
-}
-
+func NewAgentPool(
 func NewAgentPool(
 	defaultModel, defaultMultimodalModel, defaultTranscriptionModel, defaultTranscriptionLanguage, defaultTTSModel, apiURL, apiKey, directory string,
 	availableActions func(*AgentConfig) func(ctx context.Context, pool *AgentPool) []types.Action,
