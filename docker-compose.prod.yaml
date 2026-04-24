@@ -6,8 +6,7 @@
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: ionet-postgres
-    environment:
+    container_name: agente-ION-postgres
       - POSTGRES_DB=ionet
       - POSTGRES_USER=ionet
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
@@ -21,7 +20,7 @@ services:
       retries: 3
     restart: unless-stopped
     networks:
-      - ionet-network
+      - agente-ION-network
     # Limitar recursos en producción
     deploy:
       resources:
@@ -33,8 +32,7 @@ services:
       context: .
       dockerfile: Dockerfile.webui
     image: ionet:${IMAGE_TAG:-latest}
-    container_name: ionet
-    environment:
+    container_name: agente-ION
       # API LLM (configurar según proveedor)
       - OPENAI_BASE_URL=${OPENAI_BASE_URL}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
@@ -73,16 +71,13 @@ services:
       # SSH (para acceso directo al contenedor)
       - "2222:2222"
     volumes:
-      # Pool persistente para estado
-      - ionet_pool:/pool
-      # RAG data
-      - rag_data:/rag
+      - agente-ION-pool:/pool
+      - agente-ION-rag-data:/rag
     depends_on:
       postgres:
         condition: service_healthy
     restart: unless-stopped
-    networks:
-      - ionet-network
+      - agente-ION-network
     # Healthcheck
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
@@ -100,19 +95,14 @@ services:
 
 volumes:
   postgres_data:
-    name: ionet-postgres-data
-    driver: local
+    name: agente-ION-postgres-data
   postgres_backup:
-    name: ionet-postgres-backup
-    driver: local
+    name: agente-ION-postgres-backup
   ionet_pool:
-    name: ionet-pool
-    driver: local
+    name: agente-ION-pool
   rag_data:
-    name: ionet-rag-data
-    driver: local
+    name: agente-ION-rag-data
 
 networks:
-  ionet-network:
-    name: ionet-network
-    driver: bridge
+  agente-ION-network:
+    name: agente-ION-network
