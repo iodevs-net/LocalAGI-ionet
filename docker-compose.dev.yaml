@@ -43,6 +43,10 @@ services:
       - ION_EMAIL_PASSWORD=${ION_EMAIL_PASSWORD}
       - TEAMS_WEBHOOK_URL=${TEAMS_WEBHOOK_URL}
 
+      # Agent config templates (os.ExpandEnv)
+      - MODEL_NAME=${MODEL_NAME:-inclusionai/ling-2.6-1t:free}
+      - MULTIMODAL_MODEL=${MULTIMODAL_MODEL:-nvidia/nemotron-nano-12b-v2-vl:free}
+
       
       # Seguridad
       - LOCALAGI_API_KEYS=${LOCALAGI_API_KEYS:-dev-api-key-12345}
