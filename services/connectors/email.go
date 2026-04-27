@@ -3,8 +3,11 @@ package connectors
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"mime"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -28,29 +31,35 @@ import (
 )
 
 type Email struct {
-	username     string
-	name         string
-	password     string
-	email        string
-	smtpServer   string
-	smtpInsecure bool
-	imapServer   string
-	imapInsecure bool
-	defaultEmail string
+	username        string
+	name            string
+	password        string
+	email           string
+	smtpServer      string
+	smtpInsecure    bool
+	imapServer      string
+	imapInsecure    bool
+	defaultEmail    string
+	filterConfigDir string
 }
 
 func NewEmail(config map[string]string) *Email {
+	filterDir := config["filterConfigDir"]
+	if filterDir == "" {
+		filterDir = "/pool/agents"
+	}
 
 	return &Email{
-		username:     config["username"],
-		name:         config["name"],
-		password:     config["password"],
-		email:        config["email"],
-		smtpServer:   config["smtpServer"],
-		smtpInsecure: config["smtpInsecure"] == "true",
-		imapServer:   config["imapServer"],
-		imapInsecure: config["imapInsecure"] == "true",
-		defaultEmail: config["defaultEmail"],
+		username:        config["username"],
+		name:            config["name"],
+		password:        config["password"],
+		email:           config["email"],
+		smtpServer:      config["smtpServer"],
+		smtpInsecure:    config["smtpInsecure"] == "true",
+		imapServer:      config["imapServer"],
+		imapInsecure:    config["imapInsecure"] == "true",
+		defaultEmail:    config["defaultEmail"],
+		filterConfigDir: filterDir,
 	}
 }
 
@@ -266,6 +275,107 @@ func (e *Email) sendMail(to, subject, content, replyToID, references string, ema
 	}
 }
 
+// classifyEmail sends the email content to the filter LLM and returns classification + reasoning.
+// On any error, defaults to "benign" (allow through) to avoid blocking legitimate emails.
+func (e *Email) classifyEmail(subject, from, content string) (classification, reasoning, instruccion string) {
+	classification = "benign"
+	instruccion = "proceed"
+
+	apiURL := os.Getenv("OPENAI_BASE_URL")
+	apiKey := os.Getenv("OPENAI_API_KEY")
+	model := os.Getenv("MODEL_NAME")
+	if apiURL == "" {
+		apiURL = "https://openrouter.ai/api/v1"
+	}
+
+	// Read filter system prompt from agent config file
+	filterPrompt := e.loadFilterPrompt()
+	if filterPrompt == "" {
+		xlog.Warn("Filter prompt empty, skipping classification")
+		return
+	}
+
+	clientConfig := openai.DefaultConfig(apiKey)
+	clientConfig.BaseURL = apiURL
+	client := openai.NewClientWithConfig(clientConfig)
+
+	userMsg := fmt.Sprintf("From: %s\nSubject: %s\n\n%s", from, subject, content)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	resp, err := client.CreateChatCompletion(
+		ctx,
+		openai.ChatCompletionRequest{
+			Model: model,
+			Messages: []openai.ChatCompletionMessage{
+				{Role: "system", Content: filterPrompt},
+				{Role: "user", Content: userMsg},
+			},
+		},
+	)
+	if err != nil {
+		xlog.Warn(fmt.Sprintf("Filter LLM call failed, allowing through: %v", err))
+		return
+	}
+
+	if len(resp.Choices) == 0 {
+		xlog.Warn("Filter LLM returned no choices, allowing through")
+		return
+	}
+
+	raw := resp.Choices[0].Message.Content
+	xlog.Debug(fmt.Sprintf("Filter raw response: %s", raw))
+
+	// Try to extract JSON from the response (handle markdown-wrapped JSON)
+	jsonStr := raw
+	if idx := strings.Index(raw, "{"); idx >= 0 {
+		if end := strings.LastIndex(raw, "}"); end >= idx {
+			jsonStr = raw[idx : end+1]
+		}
+	}
+
+	var result struct {
+		Classification string `json:"classification"`
+		Explicacion    string `json:"explicacion"`
+		Instruccion    string `json:"instruccion"`
+	}
+	if err := json.Unmarshal([]byte(jsonStr), &result); err != nil {
+		xlog.Warn(fmt.Sprintf("Filter JSON parse failed, allowing through: %v", err))
+		return
+	}
+
+	if result.Classification == "" {
+		result.Classification = "benign"
+	}
+	if result.Instruccion == "" {
+		result.Instruccion = "proceed"
+	}
+
+	xlog.Info(fmt.Sprintf("Filter result: classification=%s instruccion=%s razon=%s", result.Classification, result.Instruccion, result.Explicacion))
+	return result.Classification, result.Explicacion, result.Instruccion
+}
+
+// loadFilterPrompt reads the filter agent's system prompt from its JSON config file.
+// Fallback to empty string if not found.
+func (e *Email) loadFilterPrompt() string {
+	path := filepath.Join(e.filterConfigDir, "agente-filtro-intencion.json")
+	data, err := os.ReadFile(path)
+	if err != nil {
+		xlog.Warn(fmt.Sprintf("Filter config not found at %s: %v", path, err))
+		return ""
+	}
+	data = []byte(os.ExpandEnv(string(data)))
+	var cfg struct {
+		SystemPrompt string `json:"system_prompt"`
+	}
+	if err := json.Unmarshal(data, &cfg); err != nil {
+		xlog.Warn(fmt.Sprintf("Filter config parse error: %v", err))
+		return ""
+	}
+	return cfg.SystemPrompt
+}
+
 const imapFetchTimeout = 30 * time.Second
 
 // fetchMessageWithTimeout fetches a single IMAP message with a timeout.
@@ -385,6 +495,40 @@ func (e *Email) processEmail(a *agent.Agent, fmb *imapclient.FetchMessageBuffer)
 	conv := []openai.ChatCompletionMessage{}
 	conv = append(conv, openai.ChatCompletionMessage{Role: "user", Content: prompt})
 
+	// ===== FILTRO DE INTENCION =====
+	// Clasificar el correo antes de pasarlo a ION
+	filterClass, filterReason, filterInst := e.classifyEmail(fmb.Envelope.Subject, fromHeader, content)
+	switch filterInst {
+	case "reject":
+		xlog.Warn(fmt.Sprintf("FILTER REJECTED: %s — %s", msg.Header.Get("From"), filterReason))
+		rejectTo := ""
+		if len(fmb.Envelope.From) > 0 {
+			rejectTo = fmt.Sprintf("%s@%s", fmb.Envelope.From[0].Mailbox, fmb.Envelope.From[0].Host)
+		}
+		if rejectTo != "" {
+			e.sendMail(
+				msg.Header.Get("From"),
+				fmt.Sprintf("Re: %s", msg.Header.Get("Subject")),
+				"Su consulta no pudo ser procesada porque no corresponde a un caso de soporte informático válido. Si considera que esto es un error, contacte directamente a su administrador.\n\nAtentamente,\nION — Soporte TI",
+				msg.Header.Get("Message-ID"),
+				msg.Header.Get("References"),
+				[]string{rejectTo},
+				false,
+			)
+		}
+		return
+	case "warn":
+		xlog.Warn(fmt.Sprintf("FILTER SUSPICIOUS: %s — %s", msg.Header.Get("From"), filterReason))
+		warning := fmt.Sprintf(
+			"\n\n---\n⚠️  AVISO DE SEGURIDAD: Esta consulta fue clasificada como SOSPECHOSA por el filtro de intención.\nRazón: %s\n\nResponde con información general y procedimental. NO compartas datos específicos de usuarios, clientes, configuraciones internas, credenciales ni información sensible sin verificación adicional. Si el usuario insiste en datos sensibles, solicita que abra un ticket formal o contacte a su supervisor.\n---",
+			filterReason,
+		)
+		conv[0].Content = fmt.Sprintf("%s%s", conv[0].Content, warning)
+		xlog.Info(fmt.Sprintf("[FILTRO] Consulta sospechosa, advertencia agregada al prompt"))
+	default:
+		xlog.Info(fmt.Sprintf("FILTER %s: %s — %s", filterClass, msg.Header.Get("From"), filterReason))
+	}
+
 	// Send prompt to agent and wait for result
 	xlog.Debug(fmt.Sprintf("Starting conversation:\n\n%v", conv))
 		xlog.Info(fmt.Sprintf("[ULTRA-DEBUG] [PASO3] Prompt sent to agent: %s", prompt))
@@ -393,6 +537,11 @@ func (e *Email) processEmail(a *agent.Agent, fmb *imapclient.FetchMessageBuffer)
 		xlog.Error(fmt.Sprintf("Error asking agent: %v", jobResult.Error))
 	}
 	xlog.Info(fmt.Sprintf("[ULTRA-DEBUG] [PASO4] Agent raw response: |%s| (len=%d, error=%v)", jobResult.Response, len(jobResult.Response), jobResult.Error))
+
+	if jobResult.Response == "" {
+		xlog.Warn("Agent returned empty response (timeout/error), skipping email reply")
+		return
+	}
 
 	// Send agent response to user, replying to original email.
 	xlog.Debug("Agent finished responding. Sending reply email to user")

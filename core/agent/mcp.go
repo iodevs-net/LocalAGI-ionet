@@ -39,9 +39,21 @@ type mcpWrapperAction struct {
 }
 
 func (m *mcpWrapperAction) Run(ctx context.Context, sharedState *types.AgentSharedState, params types.ActionParams) (types.ActionResult, error) {
-	// We don't call the method here, it is used by cogito.
-	// We will just use these to have a list of actions that MCP server provides for resolving internal states
-	return types.ActionResult{Result: "MCP action called"}, fmt.Errorf("not implemented")
+	result, err := m.mcpClient.CallTool(ctx, &mcp.CallToolParams{
+		Name:      m.toolName,
+		Arguments: map[string]any(params),
+	})
+	if err != nil {
+		return types.ActionResult{}, fmt.Errorf("MCP tool call failed: %w", err)
+	}
+	var contentText string
+	for _, c := range result.Content {
+		switch v := c.(type) {
+		case *mcp.TextContent:
+			contentText += v.Text
+		}
+	}
+	return types.ActionResult{Result: contentText}, nil
 }
 
 func (m *mcpWrapperAction) Definition() types.ActionDefinition {
