@@ -373,12 +373,13 @@ func (e *Email) processEmail(a *agent.Agent, fmb *imapclient.FetchMessageBuffer)
 		xlog.Info(fmt.Sprintf("[ULTRA-DEBUG] [PASO2] Content after markdown: %d chars, starts with: %.200s", len(content), content))
 
 	// Construct prompt
-	prompt := fmt.Sprintf("%s %s:\n\nFrom: %s\nTime: %s\nSubject: %s\n=====\n%s",
+	prompt := fmt.Sprintf("%s %s:\n\nFrom: %s\nTime: %s\nSubject: %s\nToday is: %s.\n=====\n%s",
 		"This email thread was sent to you. You are",
 		e.email,
 		msg.Header.Get("From"),
 		fmb.Envelope.Date.Format(time.RFC3339),
 		fmb.Envelope.Subject,
+		time.Now().Format("Monday, January 2, 2006"),
 		content,
 	)
 	conv := []openai.ChatCompletionMessage{}
