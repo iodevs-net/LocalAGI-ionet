@@ -1,0 +1,45 @@
+# IONET - Dockerfile CI (sin frontend)
+# Construye solo el binario Go + agentes pre-configurados
+# Usado por GitHub Actions para pushear a GHCR
+
+FROM golang:1.26-alpine AS builder
+
+RUN apk add --no-cache git ca-certificates
+
+WORKDIR /build
+
+COPY go.mod go.sum ./
+COPY lib/cogito ./lib/cogito/
+RUN go mod download
+
+COPY . .
+
+RUN mkdir -p webui/react-ui/dist && touch webui/react-ui/dist/.gitkeep
+
+ARG LDFLAGS="-s -w"
+RUN CGO_ENABLED=0 go build -ldflags="$LDFLAGS" -o localagi ./
+
+FROM ubuntu:24.04
+
+LABEL maintainer="IONET <info@ionet.cl>"
+LABEL description="IONET - LocalAGI (sin frontend)"
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=America/Santiago
+
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    curl \
+    tzdata && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY --from=builder /build/localagi /usr/local/bin/localagi
+
+RUN mkdir -p /pool/agents
+COPY config/agents/*.json /pool/agents/
+
+EXPOSE 3000
+
+ENTRYPOINT ["/usr/local/bin/localagi", "serve"]

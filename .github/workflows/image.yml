@@ -78,7 +78,7 @@ jobs:
           build-args: |
             VERSION=${{ steps.prep.outputs.binary_version }}
           context: ./
-          file: ./Dockerfile.webui
+          file: ./Dockerfile.ci
           platforms: linux/amd64,linux/arm64
           push: true
           #tags: ${{ steps.prep.outputs.tags }}
