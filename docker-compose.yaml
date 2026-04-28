@@ -81,6 +81,8 @@ services:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - LOCALAGI_MODEL=${MODEL_NAME}
       - LOCALAGI_MULTIMODAL_MODEL=${MULTIMODAL_MODEL:-moondream2-20250414}
+      - MODEL_NAME=${MODEL_NAME}
+      - MULTIMODAL_MODEL=${MULTIMODAL_MODEL:-moondream2-20250414}
       - LOCALAGI_LLM_API_URL=${OPENAI_BASE_URL}
       - LOCALAGI_LLM_API_KEY=${OPENAI_API_KEY}
       - LOCALAGI_API_KEYS=${LOCALAGI_API_KEYS:-}
@@ -91,10 +93,12 @@ services:
       - DOCKER_HOST=tcp://dind:2375
       - ION_EMAIL_USER=${ION_EMAIL_USER}
       - ION_EMAIL_PASSWORD=${ION_EMAIL_PASSWORD}
+      - IODESK_MCP_TOKEN=${IODESK_MCP_TOKEN}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
       - ionet_pool:/pool
+      - ./config/agents:/pool/agents:ro
 
 networks:
   iodesk-internal:
