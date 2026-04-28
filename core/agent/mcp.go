@@ -161,23 +161,34 @@ func (a *Agent) initMCPActions() error {
 
 	// MCP HTTP Servers
 	for _, mcpServer := range a.options.mcpServers {
-		// Create HTTP client with custom roundtripper for bearer token injection
 		httpclient := &http.Client{
 			Timeout:   360 * time.Second,
 			Transport: newBearerTokenRoundTripper(mcpServer.Token, http.DefaultTransport),
 		}
 
-		streamableTransport := &mcp.StreamableClientTransport{HTTPClient: httpclient, Endpoint: mcpServer.URL}
-		session, err := client.Connect(a.context, streamableTransport, nil)
-		if err != nil {
-			xlog.Error("Failed to connect to MCP server via StreamableClientTransport", "server", mcpServer, "error", err.Error())
+		var session *mcp.ClientSession
+		for attempt := 1; attempt <= 3; attempt++ {
+			streamableTransport := &mcp.StreamableClientTransport{HTTPClient: httpclient, Endpoint: mcpServer.URL}
+			session, err = client.Connect(a.context, streamableTransport, nil)
+			if err == nil {
+				break
+			}
+			xlog.Error("Failed to connect to MCP server via StreamableClientTransport", "server", mcpServer, "attempt", attempt, "error", err.Error())
 
 			sseTransport := &mcp.SSEClientTransport{HTTPClient: httpclient, Endpoint: mcpServer.URL}
 			session, err = client.Connect(a.context, sseTransport, nil)
-			if err != nil {
-				xlog.Error("Failed to connect to MCP server via SSEClientTransport", "server", mcpServer, "error", err.Error())
-				continue
+			if err == nil {
+				break
 			}
+			xlog.Error("Failed to connect to MCP server via SSEClientTransport", "server", mcpServer, "attempt", attempt, "error", err.Error())
+
+			if attempt < 3 {
+				time.Sleep(2 * time.Second)
+			}
+		}
+		if err != nil {
+			xlog.Error("Giving up MCP connection after 3 attempts", "server", mcpServer, "error", err.Error())
+			continue
 		}
 		a.mcpSessions = append(a.mcpSessions, session)
 
