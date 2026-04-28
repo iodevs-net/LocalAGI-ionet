@@ -46,6 +46,22 @@ services:
       timeout: 5s
       retries: 3
 
+  mcp-ionet-workspace:
+    build: mcp-ionet-workspace/
+    container_name: mcp-ionet-workspace
+    networks:
+      - default
+      - iodesk-internal
+    ports:
+      - 8766:8766
+      - 8767:8767
+    environment:
+      - GOOGLE_DRIVE_CLIENT_ID=${GOOGLE_DRIVE_CLIENT_ID:-}
+      - GOOGLE_DRIVE_CLIENT_SECRET=${GOOGLE_DRIVE_CLIENT_SECRET:-}
+    volumes:
+      - ionet_pool:/pool
+      - ./mcp-ionet-workspace/drive-key.json:/app/drive-key.json:ro
+
   ionet:
     depends_on:
       postgres:
