@@ -55,6 +55,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.webui
+    networks:
+      - default
+      - iodesk-internal
     ports:
       - 8080:3000
     environment:
@@ -76,6 +79,11 @@ services:
       - "host.docker.internal:host-gateway"
     volumes:
       - ionet_pool:/pool
+
+networks:
+  iodesk-internal:
+    name: iodesk-internal
+    external: true
 
 volumes:
   postgres_data:
