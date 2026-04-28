@@ -174,7 +174,7 @@ jobs:
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.HETZNER_HOST }}
-          username: root
+          username: deploy-ci
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /root/LocalAGI-ionet
