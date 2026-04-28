@@ -44,7 +44,11 @@ func (m *mcpWrapperAction) Run(ctx context.Context, sharedState *types.AgentShar
 		Arguments: map[string]any(params),
 	})
 	if err != nil {
+		xlog.Error("MCP tool call failed", "tool", m.toolName, "error", err.Error())
 		return types.ActionResult{}, fmt.Errorf("MCP tool call failed: %w", err)
+	}
+	if result.IsError {
+		xlog.Error("MCP tool returned error", "tool", m.toolName)
 	}
 	var contentText string
 	for _, c := range result.Content {
