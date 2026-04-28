@@ -20,6 +20,7 @@ from datetime import datetime
 
 from fastmcp import FastMCP
 from drive import DriveManager
+from mcp.server.streamable_http import StreamableHTTPServerTransport, LAST_EVENT_ID_HEADER
 
 # ═══════════════════════════════════════════════════════════════════
 # CONSTANTES
@@ -366,6 +367,32 @@ if __name__ == "__main__":
     # Crear directorios base si no existen
     os.makedirs(WORKSPACE_ROOT, exist_ok=True)
     os.makedirs(os.path.join(WORKSPACE_ROOT, PERSONAS_DIR), exist_ok=True)
+
+    # ── Monkey-patch para resumibilidad SSE ────────────────────────────────────
+    # Fix Layer 1: _replay_events() retorna sin respuesta HTTP cuando no hay
+    # EventStore configurado. El cliente Go (ION) interpreta el 500 como fallo
+    # permanente de sesión. Parche: skips replay y cae en SSE fresh.
+
+    _original_handle_get = StreamableHTTPServerTransport._handle_get_request
+
+    async def _patched_handle_get(self, request, send):
+        last_event_id = request.headers.get(LAST_EVENT_ID_HEADER)
+        if last_event_id and not self._event_store:
+            # No event store: eliminar Last-Event-ID del scope para que
+            # _handle_get_request configure SSE fresh en vez de llamar a
+            # _replay_events, que retornaría sin respuesta HTTP.
+            new_headers = [
+                (k, v) for k, v in request.scope["headers"]
+                if k.decode().lower() != "last-event-id"
+            ]
+            modified_scope = dict(request.scope)
+            modified_scope["headers"] = new_headers
+            from starlette.requests import Request
+            new_request = Request(modified_scope, receive=request.receive)
+            return await _original_handle_get(self, new_request, send)
+        return await _original_handle_get(self, request, send)
+
+    StreamableHTTPServerTransport._handle_get_request = _patched_handle_get
 
     logger.info(f"Iniciando en puerto {PORT}, workspace: {WORKSPACE_ROOT}")
     mcp.run(transport="http", host=HOST, port=PORT)

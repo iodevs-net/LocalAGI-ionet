@@ -154,7 +154,9 @@ func usableTools(llm LLM, fragment Fragment, opts ...Option) (Tools, Guidelines,
 	for _, session := range o.mcpSessions {
 		mcpTools, err := mcpToolsFromTransport(o.context, session)
 		if err != nil {
-			return Tools{}, Guidelines{}, nil, fmt.Errorf("failed to get MCP tools: %w", err)
+			// Skip failed session instead of blocking all tools.
+			// Prevents single MCP server failure from disabling ALL MCP tools.
+			continue
 		}
 		for _, tool := range mcpTools {
 			tools = append(tools, tool)
@@ -162,7 +164,7 @@ func usableTools(llm LLM, fragment Fragment, opts ...Option) (Tools, Guidelines,
 		if o.mcpPrompts {
 			toolPrompts, err := mcpPromptsFromTransport(o.context, session, o.mcpArgs)
 			if err != nil {
-				return Tools{}, Guidelines{}, nil, fmt.Errorf("failed to get MCP prompts: %w", err)
+				continue
 			}
 
 			prompts = append(prompts, toolPrompts...)

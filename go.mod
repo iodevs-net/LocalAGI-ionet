@@ -17,7 +17,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
 	github.com/jung-kurt/gofpdf v1.16.2
-	github.com/modelcontextprotocol/go-sdk v1.2.0
+	github.com/modelcontextprotocol/go-sdk v1.5.0
 	github.com/mudler/cogito v0.9.5-0.20260315222927-63abdec7189b
 	github.com/mudler/localrecall v0.5.9-0.20260321005011-810084e9369b
 	github.com/mudler/skillserver v0.0.5-0.20260221145827-0639a82c8f49
@@ -33,7 +33,7 @@ require (
 	github.com/tmc/langchaingo v0.1.14
 	github.com/traefik/yaegi v0.16.1
 	github.com/valyala/fasthttp v1.68.0
-	golang.org/x/crypto v0.47.0
+	golang.org/x/crypto v0.48.0
 	jaytaylor.com/html2text v0.0.0-20230321000545-74c2419ad056
 	maunium.net/go/mautrix v0.17.0
 	mvdan.cc/xurls/v2 v2.6.0
@@ -75,7 +75,7 @@ require (
 	github.com/gofiber/template v1.8.3 // indirect
 	github.com/gofiber/utils v1.1.0 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
-	github.com/google/jsonschema-go v0.3.0 // indirect
+	github.com/google/jsonschema-go v0.4.2 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/huandu/xstrings v1.5.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
@@ -93,6 +93,8 @@ require (
 	github.com/mschoch/smat v0.2.0 // indirect
 	github.com/oxffaa/gopher-parse-sitemap v0.0.0-20191021113419-005d2eb1def4 // indirect
 	github.com/pjbgf/sha1cd v0.3.2 // indirect
+	github.com/segmentio/asm v1.1.3 // indirect
+	github.com/segmentio/encoding v0.5.4 // indirect
 	github.com/sergi/go-diff v1.4.0 // indirect
 	github.com/shopspring/decimal v1.4.0 // indirect
 	github.com/skeema/knownhosts v1.3.1 // indirect
@@ -102,8 +104,8 @@ require (
 	github.com/yosida95/uritemplate/v3 v3.0.2 // indirect
 	go.etcd.io/bbolt v1.4.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
-	golang.org/x/mod v0.31.0 // indirect
-	golang.org/x/oauth2 v0.30.0 // indirect
+	golang.org/x/mod v0.33.0 // indirect
+	golang.org/x/oauth2 v0.35.0 // indirect
 	golang.org/x/sync v0.19.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
@@ -152,10 +154,10 @@ require (
 	go.mau.fi/util v0.3.0 // indirect
 	go.starlark.net v0.0.0-20250417143717-f57e51f710eb // indirect
 	golang.org/x/exp v0.0.0-20240808152545-0cdaa3abc0fa
-	golang.org/x/net v0.49.0 // indirect
-	golang.org/x/sys v0.40.0 // indirect
-	golang.org/x/text v0.33.0 // indirect
-	golang.org/x/tools v0.40.0 // indirect
+	golang.org/x/net v0.50.0 // indirect
+	golang.org/x/sys v0.41.0 // indirect
+	golang.org/x/text v0.34.0 // indirect
+	golang.org/x/tools v0.42.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/protobuf v1.36.8 // indirect
 	maunium.net/go/maulogger/v2 v2.4.1 // indirect
