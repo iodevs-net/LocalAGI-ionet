@@ -2,6 +2,9 @@
 # Construye solo el binario Go + agentes pre-configurados
 # Usado por GitHub Actions para pushear a GHCR
 
+# =============================================================================
+# STAGE 1: Builder
+# =============================================================================
 FROM golang:1.26-alpine AS builder
 
 RUN apk add --no-cache git ca-certificates
@@ -14,11 +17,15 @@ RUN go mod download
 
 COPY . .
 
+# Crear placeholder para //go:embed react-ui/dist/*
 RUN mkdir -p webui/react-ui/dist && touch webui/react-ui/dist/.gitkeep
 
 ARG LDFLAGS="-s -w"
 RUN CGO_ENABLED=0 go build -ldflags="$LDFLAGS" -o localagi ./
 
+# =============================================================================
+# STAGE 2: Final
+# =============================================================================
 FROM ubuntu:24.04
 
 LABEL maintainer="IONET <info@ionet.cl>"
@@ -37,6 +44,7 @@ WORKDIR /app
 
 COPY --from=builder /build/localagi /usr/local/bin/localagi
 
+# Agentes pre-configurados (auto-importación)
 RUN mkdir -p /pool/agents
 COPY config/agents/*.json /pool/agents/
 
