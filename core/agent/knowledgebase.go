@@ -160,10 +160,12 @@ func (a *Agent) saveCurrentConversation(conv Messages) {
 			}
 		case StoreUserAndAssistant:
 			// Store user and assistant messages separately
-			for _, message := range conv {
-				if message.Role == "user" || message.Role == "assistant" {
-					if err := a.options.ragdb.Store(message.Content); err != nil {
-						xlog.Error("Error storing message into memory", "error", err, "role", message.Role)
+			if a.options.ragdb != nil {
+				for _, message := range conv {
+					if message.Role == "user" || message.Role == "assistant" {
+						if err := a.options.ragdb.Store(message.Content); err != nil {
+							xlog.Error("Error storing message into memory", "error", err, "role", message.Role)
+						}
 					}
 				}
 			}
@@ -171,10 +173,12 @@ func (a *Agent) saveCurrentConversation(conv Messages) {
 			fallthrough
 		default:
 			// Store only user messages (default behavior)
-			for _, message := range conv {
-				if message.Role == "user" {
-					if err := a.options.ragdb.Store(message.Content); err != nil {
-						xlog.Error("Error storing into memory", "error", err)
+			if a.options.ragdb != nil {
+				for _, message := range conv {
+					if message.Role == "user" {
+						if err := a.options.ragdb.Store(message.Content); err != nil {
+							xlog.Error("Error storing into memory", "error", err)
+						}
 					}
 				}
 			}

@@ -15,6 +15,7 @@ RUN apk add --no-cache git ca-certificates
 WORKDIR /build
 
 COPY go.mod go.sum ./
+COPY lib/cogito ./lib/cogito/
 RUN go mod download
 
 COPY . .

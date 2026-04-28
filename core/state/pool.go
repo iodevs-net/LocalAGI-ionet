@@ -109,45 +109,6 @@ func loadPoolFromFile(path string) (*AgentPoolData, error) {
 	return poolData, err
 }
 
-func loadAgentsFromDirectory(dir string) (AgentPoolData, error) {
-	agents := make(AgentPoolData)
-	files, err := os.ReadDir(dir)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return agents, nil
-		}
-		return nil, err
-	}
-
-	for _, f := range files {
-		if f.IsDir() || !strings.HasSuffix(f.Name(), ".json") || f.Name() == "pool.json" {
-			continue
-		}
-		path := filepath.Join(dir, f.Name())
-		data, err := os.ReadFile(path)
-		if err != nil {
-			xlog.Warn("failed to read agent file", "path", path, "error", err)
-			continue
-		}
-
-		// Expand environment variables
-		data = []byte(os.ExpandEnv(string(data)))
-
-		var config AgentConfig
-		if err := json.Unmarshal(data, &config); err != nil {
-			xlog.Warn("failed to unmarshal agent config", "path", path, "error", err)
-			continue
-		}
-
-		name := strings.TrimSuffix(f.Name(), ".json")
-		if config.Name != "" {
-			name = config.Name
-		}
-		agents[name] = config
-	}
-	return agents, nil
-}
-
 func NewAgentPool(
 	defaultModel, defaultMultimodalModel, defaultTranscriptionModel, defaultTranscriptionLanguage, defaultTTSModel, apiURL, apiKey, directory string,
 	availableActions func(*AgentConfig) func(ctx context.Context, pool *AgentPool) []types.Action,
@@ -219,6 +180,36 @@ func NewAgentPool(
 		conversationLogs:             conversationPath,
 		skillsService:                skillsService,
 	}, nil
+}
+
+func loadAgentsFromDirectory(dir string) (map[string]AgentConfig, error) {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return nil, err
+	}
+	agents := make(map[string]AgentConfig)
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".json") {
+			continue
+		}
+		data, err := os.ReadFile(filepath.Join(dir, entry.Name()))
+		if err != nil {
+			xlog.Warn("failed to read agent file", "file", entry.Name(), "error", err)
+			continue
+		}
+		data = []byte(os.ExpandEnv(string(data)))
+		var cfg AgentConfig
+		if err := json.Unmarshal(data, &cfg); err != nil {
+			xlog.Warn("failed to unmarshal agent", "file", entry.Name(), "error", err)
+			continue
+		}
+		if cfg.Name == "" {
+			xlog.Warn("agent file missing name, skipping", "file", entry.Name())
+			continue
+		}
+		agents[cfg.Name] = cfg
+	}
+	return agents, nil
 }
 
 func replaceInvalidChars(s string) string {
@@ -474,8 +465,10 @@ func (a *AgentPool) startAgentWithConfig(name, pooldir string, config *AgentConf
 			)
 
 			for _, c := range connectors {
-				if !c.AgentReasoningCallback()(state) {
-					return false
+				if cb := c.AgentReasoningCallback(); cb != nil {
+					if !cb(state) {
+						return false
+					}
 				}
 			}
 			return true
@@ -518,7 +511,9 @@ func (a *AgentPool) startAgentWithConfig(name, pooldir string, config *AgentConf
 			)
 
 			for _, c := range connectors {
-				c.AgentResultCallback()(state)
+				if cb := c.AgentResultCallback(); cb != nil {
+					cb(state)
+				}
 			}
 		}),
 		WithObserver(obs),
