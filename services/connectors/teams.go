@@ -68,11 +68,11 @@ func (t *TeamsConnector) SendMessage(text string) error {
 }
 
 func (t *TeamsConnector) AgentResultCallback() func(state types.ActionState) {
-	return nil
+	return func(state types.ActionState) {}
 }
 
 func (t *TeamsConnector) AgentReasoningCallback() func(state types.ActionCurrentState) bool {
-	return nil
+	return func(state types.ActionCurrentState) bool { return true }
 }
 
 func (t *TeamsConnector) Start(a *agent.Agent) {

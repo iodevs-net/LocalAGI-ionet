@@ -1,0 +1,373 @@
+package cogito
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"slices"
+	"strings"
+
+	"github.com/mudler/cogito/structures"
+	"github.com/mudler/xlog"
+	"github.com/sashabaranov/go-openai"
+	"github.com/sashabaranov/go-openai/jsonschema"
+)
+
+type MessageRole string
+
+const (
+	AssistantMessageRole MessageRole = "assistant"
+	UserMessageRole      MessageRole = "user"
+	ToolMessageRole      MessageRole = "tool"
+	SystemMessageRole    MessageRole = "system"
+)
+
+func (m MessageRole) String() string {
+	return string(m)
+}
+
+type InjectedMessage struct {
+	Message   openai.ChatCompletionMessage
+	Iteration int // Iteration number when message was injected
+}
+
+type Status struct {
+	LastUsage        LLMUsage // Track token usage from the last LLM call
+	Iterations       int
+	ToolsCalled      Tools
+	ToolResults      []ToolStatus
+	Plans            []PlanStatus
+	PastActions      []ToolStatus         // Track past actions for loop detections
+	ReasoningLog     []string             // Track reasoning for each iteration
+	TODOs            *structures.TODOList // TODO tracking for iterative execution
+	TODOIteration    int                  // Current TODO iteration
+	TODOPhase        string               // Current phase: "work" or "review"
+	InjectedMessages []InjectedMessage    // Track successfully injected messages with timing
+}
+
+type Fragment struct {
+	Messages       []openai.ChatCompletionMessage
+	ParentFragment *Fragment
+	Status         *Status
+	Multimedia     []Multimedia
+}
+
+// Messages returns the chat completion messages from this fragment,
+// automatically prepending a force-text-reply system message if tool calls are detected.
+// This ensures LLMs provide natural language responses instead of JSON tool syntax
+// when Ask() is called after ExecuteTools().
+func (f Fragment) GetMessages() []openai.ChatCompletionMessage {
+
+	// TODO: this is kinda of brittle because LLM interface implementers needs to call this methods to get the messages,
+	// but we don't enforce it - worse is that we change the user messages and they might not expect that when calling GetMessages().
+	// We should move away from this, and have a more explicit way to get the messages.
+
+	messages := f.Messages
+
+	// Check if conversation contains tool calls
+	hasToolCalls := false
+	for _, msg := range messages {
+		if len(msg.ToolCalls) > 0 {
+			hasToolCalls = true
+			break
+		}
+	}
+
+	// If tool calls detected, prepend instruction for text-only reply
+	// This prevents the LLM from outputting JSON tool syntax like:
+	// [{"index":0,"type":"function","function":{"name":"tool","arguments":"..."}}]
+	if hasToolCalls {
+		// Reply to the user without using any tools or function calls. Just reply with the message.
+		forceTextReply := "Provide a natural language response to the user. Do not use any tools or function calls in your reply."
+
+		messages = append([]openai.ChatCompletionMessage{
+			{
+				Role:    "system",
+				Content: forceTextReply,
+			},
+		}, messages...)
+	}
+
+	return normalizeSystemMessages(messages)
+}
+
+func NewEmptyFragment() Fragment {
+	return Fragment{
+		Status: &Status{
+			PastActions:  []ToolStatus{},
+			ReasoningLog: []string{},
+			ToolsCalled:  Tools{},
+			ToolResults:  []ToolStatus{},
+			LastUsage:    LLMUsage{},
+		},
+	}
+}
+
+func NewFragment(messages ...openai.ChatCompletionMessage) Fragment {
+	return Fragment{
+		Messages: messages,
+		Status: &Status{
+			PastActions:  []ToolStatus{},
+			ReasoningLog: []string{},
+			ToolsCalled:  Tools{},
+			ToolResults:  []ToolStatus{},
+			LastUsage:    LLMUsage{},
+		},
+	}
+}
+
+// TODO: Video, Audio, Image input
+type Multimedia interface {
+	URL() string
+}
+
+func (r Fragment) AddMessage(role MessageRole, content string, mm ...Multimedia) Fragment {
+	chatCompletionMessage := openai.ChatCompletionMessage{
+		Role: role.String(),
+	}
+
+	if len(mm) > 0 {
+		multiContent := []openai.ChatMessagePart{
+			{
+				Text: content,
+				Type: openai.ChatMessagePartTypeText,
+			},
+		}
+
+		for _, img := range mm {
+			r.Multimedia = append(r.Multimedia, img)
+			multiContent = append(multiContent, openai.ChatMessagePart{
+				Type: openai.ChatMessagePartTypeImageURL,
+				ImageURL: &openai.ChatMessageImageURL{
+					URL: img.URL(),
+				},
+			})
+		}
+		chatCompletionMessage.MultiContent = multiContent
+	} else {
+		chatCompletionMessage.Content = content
+	}
+
+	r.Messages = append(r.Messages, chatCompletionMessage)
+
+	return r
+}
+
+// AddToolMessage adds a tool result message with the specified tool_call_id
+func (r Fragment) AddToolMessage(content, toolCallID string) Fragment {
+	chatCompletionMessage := openai.ChatCompletionMessage{
+		Role:       "tool",
+		Content:    content,
+		ToolCallID: toolCallID,
+	}
+
+	r.Messages = append(r.Messages, chatCompletionMessage)
+
+	return r
+}
+
+func (r Fragment) AddStartMessage(role MessageRole, content string, mm ...Multimedia) Fragment {
+	r.Messages = append([]openai.ChatCompletionMessage{
+		{
+			Role:    role.String(),
+			Content: content,
+		},
+	}, r.Messages...)
+	return r
+}
+
+func (r Fragment) Extract(ctx context.Context, llm LLM, obj any) error {
+	schema, err := jsonschema.GenerateSchemaForType(obj)
+	if err != nil {
+		return fmt.Errorf("failed to generate schema for type: %w", err)
+	}
+
+	return r.ExtractStructure(ctx, llm, structures.Structure{
+		Schema: *schema,
+		Object: &obj,
+	})
+}
+
+// ExtractStructure extracts a structure from the result using the provided JSON schema definition
+// and unmarshals it into the provided destination
+func (r Fragment) ExtractStructure(ctx context.Context, llm LLM, s structures.Structure) error {
+	toolName := "json"
+	messages := slices.Clone(r.Messages)
+
+	decision := openai.ChatCompletionRequest{
+		Messages: messages,
+		Tools: []openai.Tool{
+			{
+				Type: openai.ToolTypeFunction,
+				Function: &openai.FunctionDefinition{
+					Strict:     true,
+					Name:       toolName,
+					Parameters: s.Schema,
+				},
+			},
+		},
+
+		ToolChoice: openai.ToolChoice{
+			Type:     openai.ToolTypeFunction,
+			Function: openai.ToolFunction{Name: toolName},
+		},
+	}
+
+	resp, usage, err := llm.CreateChatCompletion(ctx, decision)
+	if err != nil {
+		return err
+	}
+
+	r.Status.LastUsage = usage
+
+	if len(resp.ChatCompletionResponse.Choices) != 1 {
+		return fmt.Errorf("no choices: %d", len(resp.ChatCompletionResponse.Choices))
+	}
+
+	msg := resp.ChatCompletionResponse.Choices[0].Message
+
+	if len(msg.ToolCalls) == 0 {
+		return fmt.Errorf("no tool calls: %d", len(msg.ToolCalls))
+	}
+
+	return json.Unmarshal([]byte(msg.ToolCalls[0].Function.Arguments), s.Object)
+}
+
+type ToolChoice struct {
+	Name      string         `json:"name"`
+	Arguments map[string]any `json:"arguments"`
+	ID        string         `json:"id"`
+	Reasoning string         `json:"reasoning"`
+}
+
+// ToolCallDecision represents the decision made by a tool call callback
+// It allows the callback to approve, reject, provide adjustment feedback, or directly modify the tool choice
+type ToolCallDecision struct {
+	// Approved: true to proceed with the tool call, false to interrupt execution
+	Approved bool
+
+	// Adjustment: feedback string for the LLM to interpret and adjust the tool call
+	// Empty string means no adjustment needed. If provided, the LLM will re-evaluate
+	// the tool call based on this feedback.
+	Adjustment string
+
+	// Modified: directly modified tool choice that takes precedence over Adjustment
+	// If set, this tool choice is used directly without re-querying the LLM
+	// This allows programmatic modification of tool arguments
+	Modified *ToolChoice
+
+	// Skip: skip this tool call but continue execution (alternative to Approved: false)
+	// When true, the tool call is skipped and execution continues
+	Skip bool
+}
+
+// SelectTool allows the LLM to select a tool from the fragment of conversation
+func (f Fragment) SelectTool(ctx context.Context, llm LLM, availableTools Tools, forceTool string) (Fragment, *ToolChoice, error) {
+	messages := slices.Clone(f.Messages)
+	decision := openai.ChatCompletionRequest{
+		Messages: messages,
+		Tools:    availableTools.ToOpenAI(),
+	}
+
+	if forceTool != "" {
+		decision.ToolChoice = openai.ToolChoice{
+			Type:     openai.ToolTypeFunction,
+			Function: openai.ToolFunction{Name: forceTool},
+		}
+	}
+
+	resp, usage, err := llm.CreateChatCompletion(ctx, decision)
+	if err != nil {
+		return Fragment{}, nil, err
+	}
+
+	f.Status.LastUsage = usage
+
+	if len(resp.ChatCompletionResponse.Choices) != 1 {
+		return Fragment{}, nil, fmt.Errorf("no choices: %d", len(resp.ChatCompletionResponse.Choices))
+	}
+
+	if len(resp.ChatCompletionResponse.Choices[0].Message.ToolCalls) == 0 {
+		xlog.Debug("LLM did not select any tool", "response", resp.ChatCompletionResponse.Choices[0].Message)
+		return Fragment{}, nil, nil
+	}
+
+	toolCall := resp.ChatCompletionResponse.Choices[0].Message.ToolCalls[0]
+	arguments := make(map[string]any)
+
+	if err := json.Unmarshal([]byte(toolCall.Function.Arguments), &arguments); err != nil {
+		return Fragment{}, nil, fmt.Errorf("failed to parse tool call arguments: %w", err)
+	}
+
+	f.Messages = append(f.Messages, openai.ChatCompletionMessage{
+		Role: AssistantMessageRole.String(),
+		ToolCalls: []openai.ToolCall{
+			{
+				Type: openai.ToolTypeFunction,
+				Function: openai.FunctionCall{
+					Name:      toolCall.Function.Name,
+					Arguments: toolCall.Function.Arguments,
+				},
+			},
+		},
+	})
+
+	return f, &ToolChoice{Name: toolCall.Function.Name, Arguments: arguments}, nil
+}
+
+func (f Fragment) String() string {
+	var str strings.Builder
+	for _, msg := range f.Messages {
+		str.WriteString(fmt.Sprintf("%s: %s\n", msg.Role, msg.Content))
+		if len(msg.ToolCalls) > 0 {
+			for _, tool := range msg.ToolCalls {
+				str.WriteString(fmt.Sprintf("  Tool call: %s(%s)\n", tool.Function.Name, tool.Function.Arguments))
+			}
+		}
+	}
+
+	return str.String()
+}
+
+// AllFragmentsStrings walks through all the fragment parents to retrieve all the conversations and represent that as a string
+// This is particularly useful if chaining different fragments and want to still feed the conversation
+// as a context to the LLM.
+func (f Fragment) AllFragmentsStrings() string {
+	if f.ParentFragment == nil {
+		return f.String()
+	}
+	return f.String() + "\n\n" + f.ParentFragment.AllFragmentsStrings()
+}
+
+func (f Fragment) AddLastMessage(f2 Fragment) Fragment {
+	if len(f2.Messages) > 0 {
+		f.Messages = append(f.Messages, f2.Messages[len(f2.Messages)-1])
+	}
+	return f
+}
+
+func (f Fragment) LastMessage() *openai.ChatCompletionMessage {
+	if len(f.Messages) == 0 {
+		return nil
+	}
+	return &f.Messages[len(f.Messages)-1]
+}
+
+func (f Fragment) LastAssistantAndToolMessages() []openai.ChatCompletionMessage {
+
+	lastMessages := []openai.ChatCompletionMessage{}
+	found := false
+	for i := len(f.Messages) - 1; i >= 0; i-- {
+
+		if f.Messages[i].Role == AssistantMessageRole.String() || f.Messages[i].Role == ToolMessageRole.String() {
+			found = true
+			lastMessages = append([]openai.ChatCompletionMessage{f.Messages[i]}, lastMessages...)
+		}
+
+		if found && (f.Messages[i].Role != AssistantMessageRole.String() && f.Messages[i].Role != ToolMessageRole.String()) {
+			break
+		}
+	}
+
+	return lastMessages
+}

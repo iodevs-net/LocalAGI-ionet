@@ -14,3 +14,5 @@ example/scheduler/example_tasks.json
 # Build artifacts
 localagi-
 .serena/
+mcp-ionet-workspace/drive-key.json
+_AUTENTICAR_DRIVE.html

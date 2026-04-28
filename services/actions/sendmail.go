@@ -1,9 +1,11 @@
 package actions
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"net/smtp"
+	"time"
 
 	"github.com/mudler/LocalAGI/core/types"
 	"github.com/mudler/LocalAGI/pkg/config"
@@ -11,21 +13,27 @@ import (
 )
 
 func NewSendMail(config map[string]string) *SendMailAction {
-	return &SendMailAction{
+	s := &SendMailAction{
 		username: config["username"],
 		password: config["password"],
 		email:    config["email"],
 		smtpHost: config["smtpHost"],
 		smtpPort: config["smtpPort"],
 	}
+	s.fromEmail = config["fromEmail"]
+	if s.fromEmail == "" {
+		s.fromEmail = config["email"]
+	}
+	return s
 }
 
 type SendMailAction struct {
-	username string
-	password string
-	email    string
-	smtpHost string
-	smtpPort string
+	username  string
+	password  string
+	email     string
+	fromEmail string
+	smtpHost  string
+	smtpPort  string
 }
 
 func (a *SendMailAction) Run(ctx context.Context, sharedState *types.AgentSharedState, params types.ActionParams) (types.ActionResult, error) {
@@ -41,6 +49,17 @@ func (a *SendMailAction) Run(ctx context.Context, sharedState *types.AgentShared
 		return types.ActionResult{}, err
 	}
 
+	// Build RFC 2822 message with proper headers
+	var buf bytes.Buffer
+	buf.WriteString(fmt.Sprintf("From: ION <%s>\r\n", a.fromEmail))
+	buf.WriteString(fmt.Sprintf("To: %s\r\n", result.To))
+	buf.WriteString(fmt.Sprintf("Subject: %s\r\n", result.Subject))
+	buf.WriteString(fmt.Sprintf("Date: %s\r\n", time.Now().Format(time.RFC1123Z)))
+	buf.WriteString("MIME-Version: 1.0\r\n")
+	buf.WriteString("Content-Type: text/plain; charset=\"utf-8\"\r\n")
+	buf.WriteString("\r\n")
+	buf.WriteString(result.Message)
+
 	// Authentication.
 	auth := smtp.PlainAuth("", a.email, a.password, a.smtpHost)
 
@@ -49,7 +68,7 @@ func (a *SendMailAction) Run(ctx context.Context, sharedState *types.AgentShared
 		fmt.Sprintf("%s:%s", a.smtpHost, a.smtpPort),
 		auth, a.email, []string{
 			result.To,
-		}, []byte(result.Message))
+		}, buf.Bytes())
 	if err != nil {
 		return types.ActionResult{}, err
 	}
@@ -116,10 +135,17 @@ func SendMailConfigMeta() []config.Field {
 		},
 		{
 			Name:     "email",
-			Label:    "From Email",
+			Label:    "Auth Email (SMTP)",
 			Type:     config.FieldTypeText,
 			Required: true,
-			HelpText: "Sender email address",
+			HelpText: "SMTP authentication email address",
+		},
+		{
+			Name:     "fromEmail",
+			Label:    "From Email",
+			Type:     config.FieldTypeText,
+			Required: false,
+			HelpText: "Display From address (defaults to Auth Email if empty)",
 		},
 	}
 }

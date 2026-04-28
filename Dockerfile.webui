@@ -32,6 +32,9 @@ WORKDIR /work
 # Copy go.mod and go.sum files first to leverage Docker cache
 COPY go.mod go.sum ./
 
+# Copy the cogito lib go.mod (needed for local replace directive)
+COPY lib/cogito/go.mod lib/cogito/go.sum ./lib/cogito/
+
 # Download dependencies - this layer will be cached as long as go.mod and go.sum don't change
 RUN go mod download
 

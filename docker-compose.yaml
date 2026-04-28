@@ -46,6 +46,22 @@ services:
       timeout: 5s
       retries: 3
 
+  mcp-ionet-workspace:
+    build: mcp-ionet-workspace/
+    container_name: mcp-ionet-workspace
+    networks:
+      - default
+      - iodesk-internal
+    ports:
+      - 8766:8766
+      - 8767:8767
+    environment:
+      - GOOGLE_DRIVE_CLIENT_ID=${GOOGLE_DRIVE_CLIENT_ID:-}
+      - GOOGLE_DRIVE_CLIENT_SECRET=${GOOGLE_DRIVE_CLIENT_SECRET:-}
+    volumes:
+      - ionet_pool:/pool
+      - ./mcp-ionet-workspace/drive-key.json:/app/drive-key.json:ro
+
   ionet:
     depends_on:
       postgres:
@@ -55,6 +71,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.webui
+    networks:
+      - default
+      - iodesk-internal
     ports:
       - 8080:3000
     environment:
@@ -70,10 +89,17 @@ services:
       - LOCALAGI_ENABLE_CONVERSATIONS_LOGGING=false
       - LOCALAGI_SSHBOX_URL=root:root@sshbox:22
       - DOCKER_HOST=tcp://dind:2375
+      - ION_EMAIL_USER=${ION_EMAIL_USER}
+      - ION_EMAIL_PASSWORD=${ION_EMAIL_PASSWORD}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
       - ionet_pool:/pool
+
+networks:
+  iodesk-internal:
+    name: iodesk-internal
+    external: true
 
 volumes:
   postgres_data:
