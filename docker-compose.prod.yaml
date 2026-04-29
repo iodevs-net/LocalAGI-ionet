@@ -30,9 +30,6 @@ services:
           memory: 1G
 
   ionet:
-    build:
-      context: .
-      dockerfile: Dockerfile.ci
     image: ghcr.io/iodevs-net/localagi-ionet:latest
     container_name: ionet
     environment:
