@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"net"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -17,7 +19,7 @@ type Env struct {
 	TranscriptionLanguage   string
 	TTSModel                string
 	Timeout                 string
-	
+
 	// Directories and paths
 	StateDir                string
 	LocalRAGURL             string
@@ -25,18 +27,28 @@ type Env struct {
 	SSHBoxURL               string
 	CollectionDBPath        string
 	FileAssets              string
-	
+
 	// Conversation settings
 	EnableConversationsLogging bool
 	APIKeys                   []string
 	ConversationDuration      string
-	
+
 	// RAG/Vector settings
 	VectorEngine              string
 	EmbeddingModel            string
 	MaxChunkingSize           int
 	ChunkOverlap              int
 	DatabaseURL               string
+
+	// PostgreSQL connection (for vector engine)
+	// Si se setean estos, DatabaseURL se construye automaticamente
+	// con url.URL.UserPassword() que URL-encodea el password.
+	PGHost     string
+	PGPort     string
+	PGUser     string
+	PGPassword string
+	PGDBName   string
+	PGSSLMode  string
 }
 
 // LoadEnv reads all environment variables and returns an Env struct
@@ -61,26 +73,32 @@ func LoadEnv() Env {
 		VectorEngine:             os.Getenv("VECTOR_ENGINE"),
 		EmbeddingModel:           os.Getenv("EMBEDDING_MODEL"),
 		DatabaseURL:              os.Getenv("DATABASE_URL"),
+		PGHost:                   os.Getenv("PG_HOST"),
+		PGPort:                   os.Getenv("PG_PORT"),
+		PGUser:                   os.Getenv("PG_USER"),
+		PGPassword:               os.Getenv("PG_PASSWORD"),
+		PGDBName:                 os.Getenv("PG_DBNAME"),
+		PGSSLMode:                os.Getenv("PG_SSLMODE"),
 	}
-	
+
 	// Parse APIKeys from comma-separated string
 	if apiKeysEnv := os.Getenv("LOCALAGI_API_KEYS"); apiKeysEnv != "" {
 		env.APIKeys = strings.Split(apiKeysEnv, ",")
 	}
-	
+
 	// Parse numeric values
 	if maxChunkingSizeEnv := os.Getenv("MAX_CHUNKING_SIZE"); maxChunkingSizeEnv != "" {
 		if n, err := strconv.Atoi(maxChunkingSizeEnv); err == nil {
 			env.MaxChunkingSize = n
 		}
 	}
-	
+
 	if chunkOverlapEnv := os.Getenv("CHUNK_OVERLAP"); chunkOverlapEnv != "" {
 		if n, err := strconv.Atoi(chunkOverlapEnv); err == nil {
 			env.ChunkOverlap = n
 		}
 	}
-	
+
 	// Set defaults for empty values
 	if env.VectorEngine == "" {
 		env.VectorEngine = "chromem"
@@ -91,8 +109,65 @@ func LoadEnv() Env {
 	if env.MaxChunkingSize == 0 {
 		env.MaxChunkingSize = 400
 	}
-	
+
+	// Construir DATABASE_URL desde PG_* si DATABASE_URL no se seteo.
+	// url.URL.UserPassword() URL-encodea el password correctamente.
+	if env.DatabaseURL == "" && (env.PGHost != "" || env.PGPassword != "") {
+		env.DatabaseURL = buildPostgresURL(buildPostgresURLInput{
+			host:     env.PGHost,
+			port:     env.PGPort,
+			user:     env.PGUser,
+			password: env.PGPassword,
+			dbname:   env.PGDBName,
+			sslmode:  env.PGSSLMode,
+		})
+	}
+
 	return env
+}
+
+// buildPostgresURLInput son los parametros para construir la URL de PostgreSQL.
+type buildPostgresURLInput struct {
+	host, port, user, password, dbname, sslmode string
+}
+
+// buildPostgresURL construye una URL de PostgreSQL con url.URL.
+// Esto garantiza que el password sea URL-encoded correctamente,
+// evitando el error "net/url: invalid userinfo" cuando el password
+// contiene caracteres especiales como @, :, %, #.
+func buildPostgresURL(cfg buildPostgresURLInput) string {
+	if cfg.host == "" {
+		cfg.host = "localhost"
+	}
+	if cfg.port == "" {
+		cfg.port = "5432"
+	}
+	if cfg.user == "" {
+		cfg.user = "postgres"
+	}
+
+	u := &url.URL{
+		Scheme: "postgresql",
+		Host:   net.JoinHostPort(cfg.host, cfg.port),
+	}
+
+	if cfg.password != "" {
+		u.User = url.UserPassword(cfg.user, cfg.password)
+	} else {
+		u.User = url.User(cfg.user)
+	}
+
+	if cfg.dbname != "" {
+		u.Path = "/" + cfg.dbname
+	}
+
+	if cfg.sslmode != "" {
+		q := url.Values{}
+		q.Set("sslmode", cfg.sslmode)
+		u.RawQuery = q.Encode()
+	}
+
+	return u.String()
 }
 
 // envOrDefault returns the environment variable value if set, otherwise the fallback.
