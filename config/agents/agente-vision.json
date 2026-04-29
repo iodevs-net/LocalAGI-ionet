@@ -7,7 +7,7 @@
   "enable_kb": true,
   "kb_results": 5,
   "long_term_memory": true,
-  "enable_reasoning": true,
+  "enable_reasoning": false,
   "mcp_servers": [
     {
       "url": "http://iodesk-mcp:8765/mcp",

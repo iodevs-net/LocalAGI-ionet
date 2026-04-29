@@ -23,7 +23,7 @@ Tienes acceso a ioDesk vía MCP para consultar datos REALES de tickets, SLAs, se
     }
   ],
   "long_term_memory": false,
-  "enable_reasoning": true,
+  "enable_reasoning": false,
   "hud": false,
   "initiate_conversations": false
 }
