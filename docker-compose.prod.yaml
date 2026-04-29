@@ -5,7 +5,8 @@
 
 services:
   postgres:
-    image: postgres:16-alpine
+    # Imagen con pg_textsearch + pgvector + vectorscale + timescaledb
+    image: quay.io/mudler/localrecall:latest-postgresql
     container_name: ionet-postgres
     environment:
       - POSTGRES_DB=ionet
@@ -50,12 +51,16 @@ services:
       - LOCALAGI_ENABLE_CONVERSATIONS_LOGGING=${ENABLE_LOGGING:-false}
       - LOCALAGI_BASE_URL=https://agentes.ionet.cl
       
-      # Base de datos
-      # VECTOR_ENGINE y DATABASE_URL: deshabilitados porque Go url.Parse
-      # no acepta passwords con caracteres especiales sin URL-encode.
-      # Para activar PG vector search, URL-encodear POSTGRES_PASSWORD.
-      # - VECTOR_ENGINE=postgres
-      # - DATABASE_URL=postgresql://ionet:${POSTGRES_PASSWORD}@postgres:5432/ionet?sslmode=disable
+      # Vector engine: PostgreSQL con pg_textsearch + pgvector + vectorscale
+      # Go construye DATABASE_URL desde PG_* con url.URL.UserPassword()
+      # que URL-encodea el password correctamente.
+      - VECTOR_ENGINE=postgres
+      - PG_HOST=postgres
+      - PG_PORT=5432
+      - PG_USER=ionet
+      - PG_PASSWORD=${POSTGRES_PASSWORD}
+      - PG_DBNAME=ionet
+      - PG_SSLMODE=disable
       - EMBEDDING_MODEL=${EMBEDDING_MODEL}
       
       # M365 Sync (para scripts de sync)
