@@ -8,6 +8,12 @@
   "kb_results": 8,
   "kb_auto_search": true,
   "kb_as_tools": true,
+  "mcp_servers": [
+    {
+      "url": "http://iodesk-mcp:8765/mcp",
+      "token": "${IODESK_MCP_TOKEN}"
+    }
+  ],
   "long_term_memory": false,
   "enable_reasoning": true,
   "hud": false,
