@@ -13,10 +13,6 @@
     {
       "url": "http://iodesk-mcp:8765/mcp",
       "token": "${IODESK_MCP_TOKEN}"
-    },
-    {
-      "url": "http://mcp-ionet-workspace:8766/mcp",
-      "token": ""
     }
   ],
   "actions": [
