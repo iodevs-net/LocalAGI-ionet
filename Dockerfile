@@ -57,21 +57,23 @@ WORKDIR /app
 COPY --from=builder /build/localagi /usr/local/bin/
 COPY --from=ui-builder /app/dist /app/webui/dist
 
-# Copiar agentes pre-configurados (auto-importación)
-RUN mkdir -p /pool/agents
-COPY config/agents/*.json /pool/agents/
+# Copiar agentes pre-configurados — se copian al pool en startup
+# (el volume /pool persiste y shadowaria el COPY directo)
+RUN mkdir -p /app/config/agents /pool/agents
+COPY config/agents/*.json /app/config/agents/
 
 # Configurar SSH
 RUN mkdir /var/run/sshd && \
     sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config && \
     sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
 
-# Entrypoint
-COPY <<EOF /entrypoint.sh
+# Entrypoint: sincroniza configs al pool en cada inicio
+COPY <<'EOF' /entrypoint.sh
 #!/bin/bash
 echo "[IONET] Iniciando en MODO PRODUCCIÓN"
 echo "[IONET] Puerto SSH: 2222"
 echo "[IONET] Puerto App: 8080"
+cp /app/config/agents/*.json /pool/agents/ 2>/dev/null || true
 /usr/sbin/sshd
 exec /usr/local/bin/localagi serve
 EOF
@@ -101,12 +103,20 @@ WORKDIR /app
 COPY --from=builder /build/localagi /usr/local/bin/
 COPY --from=ui-builder /app/dist /app/webui/dist
 
-# Copiar agentes pre-configurados (auto-importación)
-RUN mkdir -p /pool/agents
-COPY config/agents/*.json /pool/agents/
+# Copiar agentes pre-configurados — se copian al pool en startup
+RUN mkdir -p /app/config/agents /pool/agents
+COPY config/agents/*.json /app/config/agents/
 
 # Crear estructura de directorios
 RUN mkdir -p /app/core /app/pkg /app/services /app/webui /app/cmd /pool
 
+# Entrypoint: sincroniza configs al pool en cada inicio
+COPY <<'EOF' /entrypoint.sh
+#!/bin/bash
+cp /app/config/agents/*.json /pool/agents/ 2>/dev/null || true
+exec /usr/local/bin/localagi serve
+EOF
+RUN chmod +x /entrypoint.sh
+
 EXPOSE 3000
-ENTRYPOINT ["/usr/local/bin/localagi", "serve"]
+ENTRYPOINT ["/entrypoint.sh"]

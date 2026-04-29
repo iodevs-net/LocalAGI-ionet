@@ -44,10 +44,20 @@ WORKDIR /app
 
 COPY --from=builder /build/localagi /usr/local/bin/localagi
 
-# Agentes pre-configurados (auto-importación)
-RUN mkdir -p /pool/agents
-COPY config/agents/*.json /pool/agents/
+# Agentes pre-configurados — se copian al pool en startup
+# (el volume /pool persiste y shadowaria el COPY directo)
+RUN mkdir -p /app/config/agents /pool/agents
+COPY config/agents/*.json /app/config/agents/
+
+# Entrypoint: sincroniza configs al pool en cada inicio
+# Asi los agentes JSON del repo son siempre la fuente de verdad
+COPY <<'EOF' /entrypoint.sh
+#!/bin/sh
+cp /app/config/agents/*.json /pool/agents/ 2>/dev/null || true
+exec /usr/local/bin/localagi serve
+EOF
+RUN chmod +x /entrypoint.sh
 
 EXPOSE 3000
 
-ENTRYPOINT ["/usr/local/bin/localagi", "serve"]
+ENTRYPOINT ["/entrypoint.sh"]
