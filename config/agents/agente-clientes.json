@@ -15,7 +15,7 @@
     }
   ],
   "long_term_memory": false,
-  "enable_reasoning": true,
+  "enable_reasoning": false,
   "hud": false,
   "initiate_conversations": false
 }

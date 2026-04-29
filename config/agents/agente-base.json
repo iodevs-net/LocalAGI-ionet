@@ -10,7 +10,7 @@
   "kb_as_tools": true,
   "long_term_memory": true,
   "summary_long_term_memory": true,
-  "enable_reasoning": true,
+  "enable_reasoning": false,
   "hud": false,
   "initiate_conversations": false
 }
