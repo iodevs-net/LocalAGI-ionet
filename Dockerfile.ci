@@ -53,7 +53,6 @@ COPY config/agents/*.json /app/config/agents/
 # Asi los agentes JSON del repo son siempre la fuente de verdad
 COPY <<'EOF' /entrypoint.sh
 #!/bin/sh
-cp /app/config/agents/*.json /pool/agents/ 2>/dev/null || true
 exec /usr/local/bin/localagi serve
 EOF
 RUN chmod +x /entrypoint.sh

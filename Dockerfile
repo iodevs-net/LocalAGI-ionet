@@ -73,7 +73,6 @@ COPY <<'EOF' /entrypoint.sh
 echo "[IONET] Iniciando en MODO PRODUCCIÓN"
 echo "[IONET] Puerto SSH: 2222"
 echo "[IONET] Puerto App: 8080"
-cp /app/config/agents/*.json /pool/agents/ 2>/dev/null || true
 /usr/sbin/sshd
 exec /usr/local/bin/localagi serve
 EOF
@@ -113,7 +112,6 @@ RUN mkdir -p /app/core /app/pkg /app/services /app/webui /app/cmd /pool
 # Entrypoint: sincroniza configs al pool en cada inicio
 COPY <<'EOF' /entrypoint.sh
 #!/bin/bash
-cp /app/config/agents/*.json /pool/agents/ 2>/dev/null || true
 exec /usr/local/bin/localagi serve
 EOF
 RUN chmod +x /entrypoint.sh

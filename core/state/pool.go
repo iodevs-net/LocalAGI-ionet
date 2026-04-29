@@ -147,8 +147,11 @@ func NewAgentPool(
 		poolData = p
 	}
 
-	// Load extra agents from agents/ directory
-	agentsDir := filepath.Join(directory, "agents")
+	// Load agents from LOCALAGI_AGENTS_DIR (imagen) o fallback a pool/agents (volume legacy)
+	agentsDir := os.Getenv("LOCALAGI_AGENTS_DIR")
+	if agentsDir == "" {
+		agentsDir = filepath.Join(directory, "agents")
+	}
 	extraAgents, err := loadAgentsFromDirectory(agentsDir)
 	if err != nil {
 		xlog.Warn("failed to load agents from directory", "directory", agentsDir, "error", err)

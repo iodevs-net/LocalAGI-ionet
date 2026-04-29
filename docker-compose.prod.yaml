@@ -45,6 +45,7 @@ services:
       
       # Configuración
       - LOCALAGI_STATE_DIR=/pool
+      - LOCALAGI_AGENTS_DIR=/app/config/agents
       - LOCALAGI_TIMEOUT=${TIMEOUT:-5m}
       - LOCALAGI_ENABLE_CONVERSATIONS_LOGGING=${ENABLE_LOGGING:-false}
       - LOCALAGI_BASE_URL=https://agentes.ionet.cl
