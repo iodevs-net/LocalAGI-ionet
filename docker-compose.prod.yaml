@@ -6,7 +6,8 @@
 services:
   postgres:
     # Imagen con pg_textsearch + pgvector + vectorscale + timescaledb
-    image: quay.io/mudler/localrecall:latest-postgresql
+    # Tags disponibles: v0.5.9-postgresql, main-postgresql
+    image: quay.io/mudler/localrecall:v0.5.9-postgresql
     container_name: ionet-postgres
     environment:
       - POSTGRES_DB=ionet
