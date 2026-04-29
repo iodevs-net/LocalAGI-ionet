@@ -27,6 +27,12 @@ var reactUI embed.FS
 
 func (app *App) registerRoutes(pool *state.AgentPool, webapp *fiber.App) {
 
+
+	// Healthcheck endpoint (no auth required)
+	webapp.Get("/health", func(c *fiber.Ctx) error {
+		return c.JSON(fiber.Map{"status": "ok"})
+	})
+
 	if len(app.config.ApiKeys) > 0 {
 		kaConfig, err := GetKeyAuthConfig(app.config.ApiKeys)
 		if err != nil || kaConfig == nil {
