@@ -64,9 +64,13 @@ services:
       - ION_EMAIL_PASSWORD=${ION_EMAIL_PASSWORD}
       - TEAMS_WEBHOOK_URL=${TEAMS_WEBHOOK_URL}
 
+      # ioDesk MCP - acceso a datos del sistema
+      - IODESK_MCP_TOKEN=${IODESK_MCP_TOKEN}
+      - IODESK_MCP_URL=http://iodesk-mcp:8765/mcp
+
     ports:
       # App
-      - "8080:8080"
+      - "8080:3000"
       # SSH (para acceso directo al contenedor)
       - "2222:2222"
     volumes:
@@ -80,9 +84,10 @@ services:
     restart: unless-stopped
     networks:
       - ionet-network
+      - iodesk-internal
     # Healthcheck
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -113,3 +118,6 @@ networks:
   ionet-network:
     name: ionet-network
     driver: bridge
+  iodesk-internal:
+    name: iodesk-internal
+    external: true
