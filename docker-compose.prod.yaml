@@ -51,8 +51,11 @@ services:
       - LOCALAGI_BASE_URL=https://agentes.ionet.cl
       
       # Base de datos
-      - VECTOR_ENGINE=postgres
-      - DATABASE_URL=postgresql://ionet:${POSTGRES_PASSWORD}@postgres:5432/ionet?sslmode=disable
+      # VECTOR_ENGINE y DATABASE_URL: deshabilitados porque Go url.Parse
+      # no acepta passwords con caracteres especiales sin URL-encode.
+      # Para activar PG vector search, URL-encodear POSTGRES_PASSWORD.
+      # - VECTOR_ENGINE=postgres
+      # - DATABASE_URL=postgresql://ionet:${POSTGRES_PASSWORD}@postgres:5432/ionet?sslmode=disable
       - EMBEDDING_MODEL=${EMBEDDING_MODEL}
       
       # M365 Sync (para scripts de sync)
