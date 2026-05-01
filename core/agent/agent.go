@@ -186,6 +186,11 @@ func (a *Agent) SetStreamCallback(fn func(cogito.StreamEvent)) {
 	a.options.streamCallback = fn
 }
 
+// StreamCallback returns the current stream callback, or nil if not set.
+func (a *Agent) StreamCallback() func(cogito.StreamEvent) {
+	return a.options.streamCallback
+}
+
 // StartConversationConsumer starts the goroutine that dispatches new conversation
 // messages to subscribers. This must be called when using AskDirect() without Run(),
 // otherwise the ConversationAction handler will deadlock on the newConversations channel.
