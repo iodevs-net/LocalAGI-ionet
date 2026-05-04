@@ -62,12 +62,24 @@ services:
       - ionet_pool:/pool
       - ./mcp-ionet-workspace/drive-key.json:/app/drive-key.json:ro
 
+  deepseek-proxy:
+    build: deepseek-proxy/
+    ports:
+      - 3001:3001
+    environment:
+      - PORT=3001
+      - DEEPSEEK_HOST=api.deepseek.com
+      - DEEPSEEK_PROTO=https
+    restart: unless-stopped
+
   ionet:
     depends_on:
       postgres:
         condition: service_healthy
       dind:
         condition: service_healthy
+      deepseek-proxy:
+        condition: service_started
     build:
       context: .
       dockerfile: Dockerfile.webui
@@ -94,6 +106,7 @@ services:
       - ION_EMAIL_USER=${ION_EMAIL_USER}
       - ION_EMAIL_PASSWORD=${ION_EMAIL_PASSWORD}
       - IODESK_MCP_TOKEN=${IODESK_MCP_TOKEN}
+      - VECTOR_ENGINE=chromem
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:

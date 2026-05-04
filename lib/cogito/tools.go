@@ -253,6 +253,8 @@ func decisionWithStreaming(ctx context.Context, llm LLM, conversation []openai.C
 			Type:     openai.ToolTypeFunction,
 			Function: openai.ToolFunction{Name: forceTool},
 		}
+	} else if len(tools) > 0 {
+		req.ToolChoice = "auto"
 	}
 
 	xlog.Debug("[decisionWithStreaming] available tools for selection", "tools", tools.Names())
@@ -382,6 +384,8 @@ func decision(ctx context.Context, llm LLM, conversation []openai.ChatCompletion
 			Type:     openai.ToolTypeFunction,
 			Function: openai.ToolFunction{Name: forceTool},
 		}
+	} else if len(tools) > 0 {
+		decision.ToolChoice = "auto"
 	}
 
 	xlog.Debug("[decision] available tools for selection", "tools", tools.Names())
@@ -1601,6 +1605,16 @@ Please provide revised tool call based on this feedback.`,
 		// Process execution results
 		for _, execResult := range executionResults {
 			o.statusCallback(execResult.result)
+			if o.streamCallback != nil {
+				resultPreview := execResult.result
+				if len(resultPreview) > 300 {
+					resultPreview = resultPreview[:300] + "..."
+				}
+				o.streamCallback(StreamEvent{
+					Type:    StreamEventToolResult,
+					Content: resultPreview,
+				})
+			}
 
 			// Add tool result to fragment with the tool_call_id
 			f = f.AddToolMessage(execResult.result, execResult.toolChoice.ID)

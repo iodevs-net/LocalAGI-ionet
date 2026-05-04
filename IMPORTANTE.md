@@ -1,12 +1,22 @@
 # =============================================================================
   Informacion sobre modelos LLM por apikey 
 # =============================================================================
-Usar solamente openrouter con sus modelos free:
-RAZONAMIENTO: nvidia/nemotron-3-super-120b-a12b:free o modelos free que tengan tool calling
-VISION: nvidia/nemotron-nano-12b-v2-vl:free
-RESPUESTAS SIMPLES / RAPIDAS: inclusionai/ling-2.6-1t:free
+Usar OpenRouter con modelos free. Verificados Mayo 2026:
 
-verificar siempre que los modelos sean :free y verificar que se esten usando los mejores modelos actuales
+| Uso | Modelo | Benchmark Score | Contexto |
+|-----|--------|----------------|----------|
+| **PRINCIPAL (tool calling)** | `deepseek-v4-flash` | 284B params, 1M contexto | 1M |
+| VISION/Multimodal | `nvidia/nemotron-nano-12b-v2-vl:free` | — | — |
+| RESPUESTAS RAPIDAS | `inclusionai/ling-2.6-1t:free` | — | — |
+
+Gemma-4-31B-it es el modelo recomendado para ION:
+- Superior en agente/razonamiento vs Nemotron-3-Super-120B
+- Multimodal nativo (texto + imagen + video)
+- Tool calling nativo para flujos agenticos
+- Apache 2.0 license
+- Benchmarks: GPQA 85.7%, MMLU-Pro 85.2%, Terminal-Bench Hard 36.4%
+
+verificar siempre que los modelos sean :free y que sigan siendo los mejores actuales
 confirmar con internet, prohibido asumir o alucinar modelos
 
 # =============================================================================

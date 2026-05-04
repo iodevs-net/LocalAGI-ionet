@@ -1,6 +1,7 @@
 package webui
 
 import (
+	"bufio"
 	"context"
 	"embed"
 	"encoding/json"
@@ -12,6 +13,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/mudler/cogito"
 	"github.com/mudler/LocalAGI/core/conversations"
 	coreTypes "github.com/mudler/LocalAGI/core/types"
 	internalTypes "github.com/mudler/LocalAGI/core/types"
@@ -630,6 +632,82 @@ func (a *App) Responses(pool *state.AgentPool, tracker *conversations.Conversati
 			if choice.Type == "function" {
 				jobOptions = append(jobOptions, coreTypes.WithToolChoice(choice.Name))
 			}
+		}
+
+		// Streaming mode: push SSE events as they arrive from the agent
+		if request.Stream != nil && *request.Stream {
+			c.Context().SetContentType("text/event-stream")
+			c.Response().Header.Set("Cache-Control", "no-cache")
+			c.Response().Header.Set("Connection", "keep-alive")
+
+			c.Context().SetBodyStreamWriter(func(w *bufio.Writer) {
+				oldCallback := agent.StreamCallback()
+				defer agent.SetStreamCallback(oldCallback)
+
+				agent.SetStreamCallback(func(ev cogito.StreamEvent) {
+					switch ev.Type {
+					case cogito.StreamEventContent:
+						data, _ := json.Marshal(map[string]string{
+							"type":  "response.output_text.delta",
+							"delta": ev.Content,
+						})
+						fmt.Fprintf(w, "event: response.output_text.delta\ndata: %s\n\n", data)
+						w.Flush()
+					case cogito.StreamEventToolCall:
+						data, _ := json.Marshal(map[string]interface{}{
+							"type": "response.tool_call",
+							"tool": ev.ToolName,
+							"args": ev.ToolArgs,
+						})
+						fmt.Fprintf(w, "event: response.tool_call\ndata: %s\n\n", data)
+						w.Flush()
+					case cogito.StreamEventToolResult:
+						data, _ := json.Marshal(map[string]interface{}{
+							"type":   "response.tool_result",
+							"result": ev.Content,
+						})
+						fmt.Fprintf(w, "event: response.tool_result\ndata: %s\n\n", data)
+						w.Flush()
+					case cogito.StreamEventStatus:
+						data, _ := json.Marshal(map[string]string{
+							"type":   "response.status",
+							"status": ev.Content,
+						})
+						fmt.Fprintf(w, "event: response.status\ndata: %s\n\n", data)
+						w.Flush()
+					case cogito.StreamEventReasoning:
+						data, _ := json.Marshal(map[string]string{
+							"type":  "response.reasoning",
+							"delta": ev.Content,
+						})
+						fmt.Fprintf(w, "event: response.reasoning\ndata: %s\n\n", data)
+						w.Flush()
+					}
+					if oldCallback != nil {
+						oldCallback(ev)
+					}
+				})
+
+				res := agent.Ask(jobOptions...)
+
+				if res.Error != nil {
+					errData, _ := json.Marshal(map[string]string{
+						"type":  "error",
+						"error": res.Error.Error(),
+					})
+					fmt.Fprintf(w, "event: error\ndata: %s\n\n", errData)
+				} else {
+					doneData, _ := json.Marshal(map[string]interface{}{
+						"type": "response.done",
+						"response": map[string]interface{}{
+							"id": uuid.New().String(),
+						},
+					})
+					fmt.Fprintf(w, "event: response.done\ndata: %s\n\n", doneData)
+				}
+				w.Flush()
+			})
+			return nil
 		}
 
 		res := agent.Ask(jobOptions...)
