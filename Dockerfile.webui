@@ -58,7 +58,13 @@ RUN apt-get update && apt-get install -y \
     docker.io \
     bash \
     wget \
-    curl
+    curl && \
+    rm -rf /var/lib/apt/lists/*
+
+# Node.js binary para MCP stdio servers (tavily, context7)
+# Binary directo ~40MB, evita apt/repos timeout
+RUN curl -fsSL https://nodejs.org/dist/v22.14.0/node-v22.14.0-linux-x64.tar.xz | \
+    tar -xJ -C /usr/local --strip-components=1
 
 # Copy the webui binary from the builder stage to the final image
 COPY --from=builder /work/localagi /localagi
