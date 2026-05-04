@@ -1143,7 +1143,10 @@ func (a *Agent) consumeJob(job *types.Job, role string) {
 			}
 			job.Result.SetResult(state)
 			job.CallbackWithResult(state)
-			conv = a.addFunctionResultToConversation(job.GetContext(), aa, types.ActionParams(t.ToolArguments.Arguments), *actionResult, conv)
+			// MCP tools handled by cogito WithMCPs() — not in availableActions, so aa is nil. Skip to avoid nil-ptr panic.
+			if aa != nil {
+				conv = a.addFunctionResultToConversation(job.GetContext(), aa, types.ActionParams(t.ToolArguments.Arguments), *actionResult, conv)
+			}
 		}),
 		cogito.WithToolCallBack(
 			func(tc *cogito.ToolChoice, _ *cogito.SessionState) cogito.ToolCallDecision {
