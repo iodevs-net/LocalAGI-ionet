@@ -36,6 +36,15 @@ type mcpWrapperAction struct {
 	inputSchema     ToolInputSchema
 	toolName        string
 	toolDescription string
+
+	// Reconnect params (optional - solo para HTTP MCP servers)
+	reconnectURL   string
+	reconnectToken string
+	httpClient     *http.Client
+	// STDIO reconnect params
+	stdioCmd  string
+	stdioArgs []string
+	stdioEnv  []string
 }
 
 func (m *mcpWrapperAction) Run(ctx context.Context, sharedState *types.AgentSharedState, params types.ActionParams) (types.ActionResult, error) {
@@ -44,8 +53,18 @@ func (m *mcpWrapperAction) Run(ctx context.Context, sharedState *types.AgentShar
 		Arguments: map[string]any(params),
 	})
 	if err != nil {
-		xlog.Error("MCP tool call failed", "tool", m.toolName, "error", err.Error())
-		return types.ActionResult{}, fmt.Errorf("MCP tool call failed: %w", err)
+		xlog.Error("MCP tool call failed, attempting reconnect", "tool", m.toolName, "error", err.Error())
+		if newSession, reconnErr := m.tryReconnect(ctx); reconnErr == nil {
+			xlog.Info("MCP reconnected, retrying tool call", "tool", m.toolName)
+			m.mcpClient = newSession
+			result, err = m.mcpClient.CallTool(ctx, &mcp.CallToolParams{
+				Name:      m.toolName,
+				Arguments: map[string]any(params),
+			})
+		}
+		if err != nil {
+			return types.ActionResult{}, fmt.Errorf("MCP tool call failed: %w", err)
+		}
 	}
 	if result.IsError {
 		xlog.Error("MCP tool returned error", "tool", m.toolName)
@@ -77,13 +96,63 @@ func (m *mcpWrapperAction) Definition() types.ActionDefinition {
 	}
 }
 
+func (m *mcpWrapperAction) tryReconnect(ctx context.Context) (*mcp.ClientSession, error) {
+	// HTTP MCP reconnect
+	if m.reconnectURL != "" {
+		mc := mcp.NewClient(&mcp.Implementation{Name: "LocalAI", Version: "v1.0.0"}, nil)
+		hc := m.httpClient
+		if hc == nil {
+			hc = &http.Client{
+				Timeout:   360 * time.Second,
+				Transport: newBearerTokenRoundTripper(m.reconnectToken, http.DefaultTransport),
+			}
+		}
+
+		for attempt := 1; attempt <= 3; attempt++ {
+			streamableTransport := &mcp.StreamableClientTransport{HTTPClient: hc, Endpoint: m.reconnectURL}
+			session, err := mc.Connect(ctx, streamableTransport, nil)
+			if err == nil {
+				return session, nil
+			}
+			xlog.Error("MCP reconnect StreamableClientTransport failed", "attempt", attempt, "error", err.Error())
+
+			sseTransport := &mcp.SSEClientTransport{HTTPClient: hc, Endpoint: m.reconnectURL}
+			session, err = mc.Connect(ctx, sseTransport, nil)
+			if err == nil {
+				return session, nil
+			}
+			xlog.Error("MCP reconnect SSEClientTransport failed", "attempt", attempt, "error", err.Error())
+
+			if attempt < 3 {
+				time.Sleep(2 * time.Second)
+			}
+		}
+		return nil, fmt.Errorf("failed to reconnect to HTTP MCP server after 3 attempts")
+	}
+
+	// STDIO MCP reconnect
+	if m.stdioCmd != "" {
+		cmd := exec.Command(m.stdioCmd, m.stdioArgs...)
+		cmd.Env = os.Environ()
+		cmd.Env = append(cmd.Env, m.stdioEnv...)
+		mc := mcp.NewClient(&mcp.Implementation{Name: "LocalAI", Version: "v1.0.0"}, nil)
+		session, err := mc.Connect(ctx, &mcp.CommandTransport{Command: cmd}, nil)
+		if err != nil {
+			return nil, fmt.Errorf("failed to reconnect to STDIO MCP server: %w", err)
+		}
+		return session, nil
+	}
+
+	return nil, fmt.Errorf("no reconnect params available")
+}
+
 type ToolInputSchema struct {
 	Type       string                 `json:"type"`
 	Properties map[string]interface{} `json:"properties,omitempty"`
 	Required   []string               `json:"required,omitempty"`
 }
 
-func (a *Agent) addTools(client *mcp.ClientSession) (types.Actions, error) {
+func (a *Agent) addTools(client *mcp.ClientSession, reconnectURL, reconnectToken string, httpClient *http.Client, stdioCmd string, stdioArgs, stdioEnv []string) (types.Actions, error) {
 	var generatedActions types.Actions
 
 	tools, err := client.ListTools(a.context, nil)
@@ -114,12 +183,17 @@ func (a *Agent) addTools(client *mcp.ClientSession) (types.Actions, error) {
 			xlog.Error("Failed to unmarshal input schema", "error", err.Error())
 		}
 
-		// Create a new action with Client + tool
 		generatedActions = append(generatedActions, &mcpWrapperAction{
 			mcpClient:       client,
 			toolName:        t.Name,
 			inputSchema:     inputSchema,
 			toolDescription: desc,
+			reconnectURL:    reconnectURL,
+			reconnectToken:  reconnectToken,
+			httpClient:      httpClient,
+			stdioCmd:        stdioCmd,
+			stdioArgs:       stdioArgs,
+			stdioEnv:        stdioEnv,
 		})
 	}
 
@@ -197,7 +271,7 @@ func (a *Agent) initMCPActions() error {
 		a.mcpSessions = append(a.mcpSessions, session)
 
 		xlog.Debug("Adding tools for MCP server", "server", mcpServer)
-		actions, err := a.addTools(session)
+		actions, err := a.addTools(session, mcpServer.URL, mcpServer.Token, httpclient, "", nil, nil)
 		if err != nil {
 			xlog.Error("Failed to add tools for MCP server", "server", mcpServer, "error", err.Error())
 		}
@@ -231,7 +305,7 @@ func (a *Agent) initMCPActions() error {
 		a.mcpSessions = append(a.mcpSessions, session)
 
 		xlog.Debug("Adding tools for MCP server (stdio)", "server", mcpStdioServer)
-		actions, err := a.addTools(session)
+		actions, err := a.addTools(session, "", "", nil, mcpStdioServer.Cmd, mcpStdioServer.Args, mcpStdioServer.Env)
 		if err != nil {
 			xlog.Error("Failed to add tools for MCP server", "server", mcpStdioServer, "error", err.Error())
 		}
@@ -240,7 +314,7 @@ func (a *Agent) initMCPActions() error {
 
 	// Pre-connected MCP sessions (e.g. in-process skills server); already in a.mcpSessions after closeMCPServers()
 	for _, session := range a.options.extraMCPSessions {
-		actions, err := a.addTools(session)
+		actions, err := a.addTools(session, "", "", nil, "", nil, nil)
 		if err != nil {
 			xlog.Error("Failed to add tools for extra MCP session", "error", err.Error())
 			continue
