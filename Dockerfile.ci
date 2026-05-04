@@ -24,23 +24,26 @@ ARG LDFLAGS="-s -w"
 RUN CGO_ENABLED=0 go build -ldflags="$LDFLAGS" -o localagi ./
 
 # =============================================================================
-# STAGE 2: Final
+# STAGE 2: Node.js (multi-stage confiable)
 # =============================================================================
-FROM ubuntu:24.04
+FROM node:22-alpine AS node-dist
+
+# =============================================================================
+# STAGE 3: Final
+# =============================================================================
+FROM alpine:3.20
 
 LABEL maintainer="IONET <info@ionet.cl>"
 LABEL description="IONET - LocalAGI (sin frontend)"
 
-ENV DEBIAN_FRONTEND=noninteractive
-ENV TZ=America/Santiago
+RUN apk add --no-cache ca-certificates curl tzdata
 
-RUN apt-get update && apt-get install -y \
-    ca-certificates \
-    curl \
-    tzdata \
-    nodejs \
-    npm && \
-    rm -rf /var/lib/apt/lists/*
+# Node.js + npx desde stage oficial
+COPY --from=node-dist /usr/local/bin/node /usr/local/bin/node
+COPY --from=node-dist /usr/local/lib/node_modules /usr/local/lib/node_modules
+COPY --from=node-dist /usr/local/bin/npx /usr/local/bin/npx
+COPY --from=node-dist /usr/local/bin/npm /usr/local/bin/npm
+RUN ln -s /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm-cli 2>/dev/null; ln -s /usr/local/lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx-cli 2>/dev/null
 
 WORKDIR /app
 
