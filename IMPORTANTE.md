@@ -5,7 +5,7 @@ Usar OpenRouter con modelos free. Verificados Mayo 2026:
 
 | Uso | Modelo | Benchmark Score | Contexto |
 |-----|--------|----------------|----------|
-| **PRINCIPAL (tool calling)** | `google/gemma-4-31b-it:free` | GPQA 85.7%, MMLU-Pro 85.2% | 256K |
+| **PRINCIPAL (tool calling)** | `deepseek-v4-flash` | 284B params, 1M contexto | 1M |
 | VISION/Multimodal | `nvidia/nemotron-nano-12b-v2-vl:free` | — | — |
 | RESPUESTAS RAPIDAS | `inclusionai/ling-2.6-1t:free` | — | — |
 
