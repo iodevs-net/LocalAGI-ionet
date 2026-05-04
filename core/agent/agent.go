@@ -1131,7 +1131,7 @@ func (a *Agent) consumeJob(job *types.Job, role string) {
 				}
 			}
 
-			aa := allActions.Find(t.Name)
+			aa := availableActions.Find(t.Name)
 			state := types.ActionState{
 				ActionCurrentState: types.ActionCurrentState{
 					Job:       job,
@@ -1151,7 +1151,7 @@ func (a *Agent) consumeJob(job *types.Job, role string) {
 				xlog.Debug("Tool call back", "tool_call", tc)
 
 				// Check if this is a user-defined action
-				chosenAction := allActions.Find(tc.Name)
+				chosenAction := availableActions.Find(tc.Name)
 
 				xlog.Debug("Action found", "action", chosenAction)
 
