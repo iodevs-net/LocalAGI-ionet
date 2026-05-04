@@ -40,6 +40,10 @@ RUN apt-get update && apt-get install -y \
     tzdata && \
     rm -rf /var/lib/apt/lists/*
 
+# Node.js para MCP stdio servers (tavily, context7, filesystem)
+RUN curl -fsSL https://nodejs.org/dist/v22.14.0/node-v22.14.0-linux-x64.tar.xz | \
+    tar -xJ -C /usr/local --strip-components=1
+
 WORKDIR /app
 
 COPY --from=builder /build/localagi /usr/local/bin/localagi

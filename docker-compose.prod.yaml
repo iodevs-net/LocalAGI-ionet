@@ -30,9 +30,27 @@ services:
         limits:
           memory: 1G
 
+  deepseek-proxy:
+    image: ghcr.io/iodevs-net/deepseek-proxy:latest
+    container_name: ionet-deepseek-proxy
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      - DEEPSEEK_HOST=api.deepseek.com
+      - DEEPSEEK_PROTO=https
+    restart: unless-stopped
+    networks:
+      - ionet-network
+
   ionet:
     image: ghcr.io/iodevs-net/localagi-ionet:latest
     container_name: ionet
+    depends_on:
+      postgres:
+        condition: service_healthy
+      deepseek-proxy:
+        condition: service_started
     environment:
       # API LLM (configurar según proveedor)
       - OPENAI_BASE_URL=${OPENAI_BASE_URL}
@@ -88,9 +106,6 @@ services:
       - ionet_pool:/pool
       # RAG data
       - rag_data:/rag
-    depends_on:
-      postgres:
-        condition: service_healthy
     restart: unless-stopped
     networks:
       - ionet-network
