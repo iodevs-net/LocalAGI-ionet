@@ -653,6 +653,35 @@ func (a *App) Responses(pool *state.AgentPool, tracker *conversations.Conversati
 						})
 						fmt.Fprintf(w, "event: response.output_text.delta\ndata: %s\n\n", data)
 						w.Flush()
+					case cogito.StreamEventToolCall:
+						data, _ := json.Marshal(map[string]interface{}{
+							"type": "response.tool_call",
+							"tool": ev.ToolName,
+							"args": ev.ToolArgs,
+						})
+						fmt.Fprintf(w, "event: response.tool_call\ndata: %s\n\n", data)
+						w.Flush()
+					case cogito.StreamEventToolResult:
+						data, _ := json.Marshal(map[string]interface{}{
+							"type":   "response.tool_result",
+							"result": ev.Content,
+						})
+						fmt.Fprintf(w, "event: response.tool_result\ndata: %s\n\n", data)
+						w.Flush()
+					case cogito.StreamEventStatus:
+						data, _ := json.Marshal(map[string]string{
+							"type":   "response.status",
+							"status": ev.Content,
+						})
+						fmt.Fprintf(w, "event: response.status\ndata: %s\n\n", data)
+						w.Flush()
+					case cogito.StreamEventReasoning:
+						data, _ := json.Marshal(map[string]string{
+							"type":  "response.reasoning",
+							"delta": ev.Content,
+						})
+						fmt.Fprintf(w, "event: response.reasoning\ndata: %s\n\n", data)
+						w.Flush()
 					}
 					if oldCallback != nil {
 						oldCallback(ev)
