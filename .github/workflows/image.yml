@@ -87,6 +87,33 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
   
+  deepseek-proxy-build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@master
+
+      - name: Login to GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push deepseek-proxy
+        uses: docker/build-push-action@v6
+        with:
+          context: ./deepseek-proxy
+          push: true
+          tags: ghcr.io/iodevs-net/deepseek-proxy:latest
+
   sshbox-build:
     runs-on: ubuntu-latest
     permissions:
@@ -167,7 +194,7 @@ jobs:
   deploy:
     name: 'Deploy to Hetzner'
     runs-on: ubuntu-latest
-    needs: [containerImages]
+    needs: [containerImages, deepseek-proxy-build]
     if: github.ref == 'refs/heads/main'
     steps:
       - name: 'SSH into Hetzner and update'
