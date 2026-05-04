@@ -19,14 +19,24 @@ const server = http.createServer((req, res) => {
       const data = JSON.parse(body);
       data.thinking = { type: 'disabled' };
 
-      // Normalize: assistant msgs with tool_calls need content:null for DeepSeek compat
+      // Normalize: ALL messages must have content field (DeepSeek strict)
       if (data.messages) {
-        data.messages = data.messages.map(msg => {
-          if (msg.role === 'assistant' && msg.tool_calls && !msg.content) {
-            return { ...msg, content: null };
+        let fixed = 0;
+        data.messages = data.messages.map((msg, i) => {
+          if (!msg.content && msg.content !== '') {
+            console.error('MSG', i, 'role=' + msg.role, 'has_tool_calls=' + !!msg.tool_calls, 'tc_len=' + (msg.tool_calls ? msg.tool_calls.length : 0));
+            fixed++;
+            if (msg.role === 'tool') {
+              return { ...msg, content: '' };
+            }
+            if (msg.role === 'assistant' && msg.tool_calls) {
+              return { ...msg, content: null };
+            }
+            return { ...msg, content: '' };
           }
           return msg;
         });
+        if (fixed > 0) console.error('FIXED', fixed, 'messages missing content');
       }
 
       const newBody = JSON.stringify(data);
