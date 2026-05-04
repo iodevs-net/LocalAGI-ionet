@@ -37,14 +37,10 @@ ENV TZ=America/Santiago
 RUN apt-get update && apt-get install -y \
     ca-certificates \
     curl \
-    tzdata && \
+    tzdata \
+    nodejs \
+    npm && \
     rm -rf /var/lib/apt/lists/*
-
-# Node.js para MCP stdio servers (tavily, context7, filesystem)
-RUN curl -fsSL --retry 5 --retry-delay 10 -o /tmp/node.tar.xz \
-    https://nodejs.org/dist/v22.14.0/node-v22.14.0-linux-x64.tar.xz && \
-    tar -xJf /tmp/node.tar.xz -C /usr/local --strip-components=1 && \
-    rm /tmp/node.tar.xz
 
 WORKDIR /app
 
