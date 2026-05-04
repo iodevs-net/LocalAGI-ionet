@@ -1028,8 +1028,8 @@ func (a *Agent) consumeJob(job *types.Job, role string) {
 
 	fragment := cogito.NewFragment(conv...)
 
-	allActions := append(a.getAvailableActionsForJob(job), a.mcpActionDefinitions...)
-	cogitoTools := allActions.ToCogitoTools(job.GetContext(), a.sharedState)
+	availableActions := a.getAvailableActionsForJob(job)
+	cogitoTools := availableActions.ToCogitoTools(job.GetContext(), a.sharedState)
 
 	obs := job.Obs
 
