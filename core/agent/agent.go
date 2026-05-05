@@ -1330,13 +1330,13 @@ func (a *Agent) consumeJob(job *types.Job, role string) {
 		}
 	}
 
-	// Important: DisableSinkState must be before WithForceReasoning()
-	if a.options.disableSinkState {
-		cogitoOpts = append(cogitoOpts, cogito.DisableSinkState)
-	}
-
 	if a.options.forceReasoning {
 		cogitoOpts = append(cogitoOpts, cogito.WithForceReasoning())
+	}
+
+	// DisableSinkState after WithForceReasoning to override sinkState
+	if a.options.disableSinkState {
+		cogitoOpts = append(cogitoOpts, cogito.DisableSinkState)
 	}
 
 	if a.options.enableGuidedTools {
