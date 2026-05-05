@@ -563,6 +563,9 @@ func pickTool(ctx context.Context, llm LLM, fragment Fragment, tools Tools, opts
 	// Step 2: Build tool names list for the intention tool
 	toolNames := []string{}
 	for _, tool := range tools {
+		if o.sinkState && o.sinkStateTool != nil && tool.Tool().Function.Name == o.sinkStateTool.Tool().Function.Name {
+			continue
+		}
 		toolNames = append(toolNames, tool.Tool().Function.Name)
 
 	}
