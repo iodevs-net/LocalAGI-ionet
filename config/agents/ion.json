@@ -8,7 +8,7 @@
   "kb_results": 5,
   "long_term_memory": true,
   "max_evaluation_loops": 5,
-  "enable_reasoning": false,
+  "enable_reasoning": true,
   "disable_sink_state": true,
   "mcp_servers": [
     {
