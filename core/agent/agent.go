@@ -1180,7 +1180,7 @@ func (a *Agent) consumeJob(job *types.Job, role string) {
 					})
 				}
 
-				if a.observer != nil && job.Obs != nil {
+				if a.observer != nil && job.Obs != nil && chosenAction != nil {
 					obs := a.observer.NewObservable()
 					obs.Name = "decision"
 					obs.ParentID = job.Obs.ID
