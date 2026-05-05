@@ -641,10 +641,6 @@ func pickTool(ctx context.Context, llm LLM, fragment Fragment, tools Tools, opts
 		"parallel", o.parallelToolExecution,
 	)
 
-	sinkStateName := ""
-	if o.sinkState {
-		sinkStateName = o.sinkStateTool.Tool().Function.Name
-	}
 
 	var intentionTools Tools
 	intentionToolName := ""
@@ -652,12 +648,12 @@ func pickTool(ctx context.Context, llm LLM, fragment Fragment, tools Tools, opts
 		if o.sinkState {
 			intentionToolName = "pick_tools"
 		}
-		intentionTools = Tools{intentionToolMultiple(toolNames, sinkStateName)}
+		intentionTools = Tools{intentionToolMultiple(toolNames, "")}
 	} else {
 		if o.sinkState {
 			intentionToolName = "pick_tool"
 		}
-		intentionTools = Tools{intentionToolSingle(toolNames, sinkStateName)}
+		intentionTools = Tools{intentionToolSingle(toolNames, "")}
 	}
 
 	intentionMessages := messages
@@ -1356,13 +1352,9 @@ TOOL_LOOP:
 
 		// Check for sink state and separate tools
 		var toolsToExecute []*ToolChoice
-		sinkStateName := ""
-		if o.sinkState {
-			sinkStateName = o.sinkStateTool.Tool().Function.Name
-		}
 
 		for _, toolResult := range selectedToolResults {
-			if o.sinkState && toolResult.Name == sinkStateName {
+			if o.sinkState && toolResult.Name == o.sinkStateTool.Tool().Function.Name {
 				hasSinkState = true
 				xlog.Debug("Sink state detected, will stop after executing other tools", "tool", toolResult.Name)
 			} else {
